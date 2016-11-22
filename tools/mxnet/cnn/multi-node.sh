@@ -1,0 +1,1 @@
+export DMLC_INTERFACE=em3; ../multi-nodes-support/launch.py --launcher ssh -n 3 -s 1 -H ../hosts python train_cifar10_resnet.py --num-nodes 3 --gpus 0,1,2,3 --lr 0.05 --num-epochs 4 --batch-size 2048 --kv-store dist_sync

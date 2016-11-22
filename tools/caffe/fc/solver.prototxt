@@ -1,0 +1,13 @@
+# The train/test net protocol buffer definition
+net: "fcn5-bBATCHSIZE.prototxt"
+base_lr: 0.05
+lr_policy: "fixed"
+max_iter: MAXITER 
+display: DISPLAYINTERVAL 
+solver_mode: DEVICE 
+momentum: 0.9
+
+# covering the full 10,000 testing images.
+test_iter: 100
+# Carry out testing every 1 training epochs.
+test_interval: TESTINTERVAL 

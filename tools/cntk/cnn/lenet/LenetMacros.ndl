@@ -1,0 +1,20 @@
+ConvPoolLayer(inp, outMap, inWCount, kW, kH, hStride, vStride, wScale, bValue, pool1W, pool1H, pool1hStride,  pool1vStride) = [
+    convW = Parameter(outMap, inWCount, init="uniform", initValueScale=wScale)
+    conv = Convolution(convW, inp, kW, kH, outMap, hStride, vStride, zeroPadding=false, imageLayout=$imageLayout$)
+    pool = MaxPooling(conv, pool1W, pool1H, pool1hStride, pool1vStride, imageLayout=$imageLayout$)
+]
+
+InnerProductLayer(inDim, outDim, x, parmScale) = [
+    W = Parameter(outDim, inDim, init="uniform", initValueScale=parmScale)
+    b = Parameter(outDim, 1,     init="uniform", initValueScale=parmScale)
+    t = Times(W, x)
+    y = Plus(t, b)
+]
+
+InnerProductReLULayer(inDim, outDim, x, parmScale) = [
+    W = Parameter(outDim, inDim, init="uniform", initValueScale=parmScale)
+    b = Parameter(outDim, 1,     init="uniform", initValueScale=parmScale)
+    t = Times(W, x)
+    z = Plus(t, b)
+    y = RectifiedLinear(z)
+]

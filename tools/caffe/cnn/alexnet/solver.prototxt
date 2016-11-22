@@ -1,0 +1,14 @@
+# The train/test net protocol buffer definition
+net: "alexnet-bBATCHSIZE.prototxt"
+base_lr: 0.001
+
+lr_policy: "fixed"
+max_iter: MAXITER 
+display: 1
+solver_mode: DEVICE 
+momentum: 0.9
+
+# covering the full 10,000 testing images.
+test_iter: 100
+# Carry out testing every 2 training epochs.
+test_interval: TESTINTERVAL 

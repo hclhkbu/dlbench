@@ -1,0 +1,86 @@
+name: "FFN"
+layer {
+  name: "data"
+  type: "Data"
+  top: "data"
+  top: "label"
+  include {
+    phase: TRAIN
+  }
+  data_param: {
+    batch_size: 1024 
+    source: "/home/dl/data/caffe/fake_data26752.lmdb"
+    backend: LMDB
+  }
+}
+
+layer {
+  name: "H1"
+  type: "InnerProduct"
+  bottom: "data"
+  top: "H1"
+  inner_product_param {
+    num_output: 2048   
+  }
+}
+
+layer {
+  name: "H1_A"
+  type: "Sigmoid"
+  bottom: "H1"
+  top: "H1"
+}
+
+layer {
+  name: "H2"
+  type: "InnerProduct"
+  bottom: "H1"
+  top: "H2"
+  inner_product_param {
+    num_output: 2048
+  }
+}
+
+layer {
+  name: "H2_A"
+  type: "Sigmoid"
+  bottom: "H2"
+  top: "H2"
+}
+
+layer {
+  name: "H3"
+  type: "InnerProduct"
+  bottom: "H2"
+  top: "H3"
+  inner_product_param {
+    num_output: 2048
+  }
+}
+
+layer {
+  name: "H3_A"
+  type: "Sigmoid"
+  bottom: "H3"
+  top: "H3"
+}
+
+
+layer {
+  name: "L"
+  type: "InnerProduct"
+  bottom: "H3"
+  top: "L"
+  inner_product_param {
+    num_output: 26752 
+  }
+}
+
+layer {
+  name: "loss"
+  type: "SoftmaxWithLoss"
+  bottom: "L"
+  bottom: "label"
+  top: "loss"
+}
+

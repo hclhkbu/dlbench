@@ -1,0 +1,128 @@
+# Parameters can be overwritten on the command line
+# for example: cntk configFile=myConfigFile RootDir=../.. 
+# For running from Visual Studio add
+# currentDirectory=$(SolutionDir)/<path to corresponding data folder> 
+RootDir = "."
+
+ConfigDir = "$RootDir$"
+DataDir   = "$RootDir$/Data"
+OutputDir = "$RootDir$/Output"
+ModelDir  = "$OutputDir$/Models"
+
+# deviceId=-1 for CPU, >=0 for GPU devices, "auto" chooses the best GPU, or CPU if no usable GPU is available
+deviceId=0 
+minibatch=4096
+maxEpochs = 20 
+
+command = train
+
+precision  = "float"
+traceLevel = 1
+modelPath  = "$ModelDir$/rnn.dnn"
+
+# uncomment the following line to write logs to a file
+#stderr=$OutputDir$/rnnOutput
+
+#numCPUThreads = 1
+
+confVocabSize = 10000
+shareNodeValueMatrices = true
+maxTempMemSizeInSamplesForCNN = 1
+
+#trainFile = "ptb.train.txt"
+trainFile = "ptb.train.32.ctf"
+
+#######################################
+#  TRAINING CONFIG                    #
+#######################################
+
+train = [
+    action = "train"
+    traceLevel = 1
+    epochSize = 0               # (for quick tests, this can be overridden with something small)
+
+    BrainScriptNetworkBuilder = [
+        inputDim = $confVocabSize$
+        labelDim = $confVocabSize$
+        embedDim = 256
+        hiddenDim = (256:256)
+        
+        #model(x) = [
+        #    E = ParameterTensor (embedDim:inputDim)
+        #    e = E * x
+        #    h = BS.RNNs.RecurrentLSTMPStack (hiddenDim, cellDims=hiddenDim, e, inputDim=embedDim)[1].h
+        #    W = ParameterTensor (labelDim:hiddenDim[1]) 
+        #    b = ParameterTensor (labelDim,init='fixedValue',value=0);
+        #    z = W * h + b
+        #].z
+
+        model = Sequential (
+            EmbeddingLayer (embedDim) :
+            RecurrentLSTMLayerStack (hiddenDim, init = "uniform", initValueScale = 0.1, allowOptimizedEngine = false) : 
+            #RecurrentLSTMLayerStack (hiddenDim, allowOptimizedEngine = false) : 
+            DenseLayer (labelDim)
+        )
+
+        words  = if deviceId >= 0 then SparseInput (inputDim) else Input (inputDim)
+        labels = Input (inputDim)
+
+        z = model(words)
+
+        # for sparse labels 
+        # crossEntropy = ReduceLogSum(z, axis=1) - TransposeTimes(labels,z)
+        # for dense labels
+        crossEntropy = CrossEntropyWithSoftmax(labels, z)
+        # TODO use sampled softmax
+
+        featureNodes    = (words)
+        labelNodes      = (labels)
+        criterionNodes  = (crossEntropy)
+        evaluationNodes = (crossEntropy)
+        outputNodes     = (z)
+        perplexity = Exp (crossEntropy)
+    ]
+    
+    reader = [
+        readerType = "CNTKTextFormatReader"
+        file = "$DataDir$/$trainFile$"
+        # fast but a memory hog
+        randomize = false
+        # slower but memory friendly
+        #randomize = true 
+        #randomizationWindow = 30000
+        traceLevel = 0
+        input = [
+            words  = [ alias = "S0"; dim = $confVocabSize$; format = "sparse" ]
+            labels = [ alias = "S1"; dim = $confVocabSize$; format = "sparse" ]
+        ]
+    ]
+   
+    SGD = [
+        minibatchSize = $minibatch$ 
+        #learningRatesPerSample = 0.1
+        learningRatesPerMB = 0.1
+        momentumPerMB = 0
+        #gradientClippingWithTruncation = true
+        #clippingThresholdPerSample = 15.0
+        maxEpochs = $maxEpochs$ 
+        numMBsToShowResult = 50
+        gradUpdateType = "none"
+        loadBestModel = true
+
+        dropoutRate = 0.0
+
+        # settings for Auto Adjust Learning Rate
+        #AutoAdjust = [
+        #    autoAdjustLR = "adjustAfterEpoch"
+        #    reduceLearnRateIfImproveLessThan = 0.001
+        #    continueReduce = false
+        #    increaseLearnRateIfImproveMoreThan = 1000000000
+        #    learnRateDecreaseFactor = 0.5
+        #    learnRateIncreaseFactor = 1.382
+        #    numMiniBatch4LRSearch = 100
+        #    numPrevLearnRates = 5
+        #    numBestSearchEpoch = 1
+        #]
+    ]
+]
+

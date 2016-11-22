@@ -1,0 +1,61 @@
+load=ndlMacros
+run=DNN
+
+ndlMacros = [
+    ImageW = 224
+    ImageH = 224
+    ImageC = 3
+    LabelDim = 1000
+
+    features = ImageInput(ImageW, ImageH, ImageC, tag = feature, imageLayout = "cudnn")
+    labels = Input(LabelDim, tag = label)
+    
+    # Kernels width and height.
+    kW = 3
+    kH = 3
+    # Kernel stride.
+    hs = 1
+    vs = 1
+    
+    # Initial parameter values.
+    convWScale = 7.07
+    convBValue = 0
+
+    fcWScale = 2.26
+    fcBValue = 0
+
+    scValue = 1
+    
+    # Batch normalization time constant.
+    bnTimeConst = 4096
+]
+
+DNN = [
+    # conv1/7x7_s2@64
+    # reLU
+    # maxpooling/3x3_s2
+    # norm/size:5 
+    # weight[cMap1, kW1 * kH1 * ImageC]
+    conv1 = ConvReLULayer(features, 64, 147, 7, 7, 2, 2, 0.95, 0.2)  
+    pool1 = MaxPooling(conv1, 3, 3, 2, 2, imageLayout=$imageLayout$)
+    norm1 = BN(pool1, 64, 0.75, 0.0001, bnTimeConst)
+
+    # conv2/1x1_s1@64 
+    # reLU 
+    # conv2/3x3_s2@192
+    # reLU
+    # norm/size:5
+    # maxpooling/3x3_s2
+    conv2 = ConvReLULayer(norm1, 64, 64, 1, 1, 1, 1, 1, 0.2) 
+    conv2_1 = ConvReLULayer(conv2, 192, 576, 3, 3, 1, 1, 1, 0.2)  
+    norm2 = BN(conv2_1, 192, 0.75, 0.0001, bnTimeConst)
+    pool2 = MaxPooling(norm2, 3, 3, 2, 2, imageLayout=$imageLayout$)
+
+    inception3a = InceptionLayer3a(inp, 192) # output 256
+    inception3b = InceptionLayer3b(inception3a, 256) # output 480
+    inception4a = InceptionLayer4a(inception3b, 480) # output 512
+    ol1 = LossBlock(inception4a, 512, LabelDim)
+    CE1 = CrossEntropyWithSoftmax(labels, ol1, tag = Criteria)
+    OutputNodes = ol1
+
+]

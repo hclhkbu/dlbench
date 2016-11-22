@@ -1,0 +1,139 @@
+WorkDir= "."
+ConfigDir= "."
+ModelDir=$WorkDir$/Output
+DataDir=HOME/data/cntk/mnist
+#DataDir=/home/comp/pengfeixu/Data/cntk/mnist
+#ndlMacros = "$ConfigDir$/Macros.ndl"
+precision=float
+
+imageLayout = "cudnn"
+
+deviceId=0
+minibatchSize=1024
+epochSize=60000
+maxEpochs=40
+
+makeMode=false
+distributedMBReading=false
+
+command=train:test
+
+
+initOnCPUOnly=true
+parallelTrain=false
+prefetch=true
+lr=0.5
+
+modelPath=$ModelDir$/Output
+eta = 0.05
+train=[
+    action= "train"
+    BrainScriptNetworkBuilder = {
+        imageShape = 784 
+        labelDim = 10
+        DNNLayer(inDim, outDim, x, parmScale) =
+        {
+            W = ParameterTensor {(outDim:inDim), init="xavier"}
+	    b = ParameterTensor {outDim, init="zero"}
+    	    z = W * x + b
+ 	}.z
+       
+        model (features) = {
+	    h1 = DNNLayer(imageShape, 4096, features, 0.01)
+	    sigmoid_h1 = Sigmoid(h1)
+	    h2 = DNNLayer(4096, 2048, sigmoid_h1, 0.01)
+	    sigmoid_h2 = Sigmoid(h2)
+	    h3 = DNNLayer(2048, 1024, sigmoid_h2, 0.01)
+	    sigmoid_h3 = Sigmoid(h3)
+	    z = DNNLayer(1024, labelDim, sigmoid_h3, 0.01)
+        }.z
+
+        # inputs
+        features = Input {imageShape} 
+        featScaled = Constant (1.0 / 256.0) .* features
+        labels   = Input {labelDim}
+
+        # apply model to features
+        z = model (featScaled)
+
+        # connect to system
+        ce       = CrossEntropyWithSoftmax (labels, z)
+        errs     = ClassificationError     (labels, z)
+
+        featureNodes    = (features)
+        labelNodes      = (labels)
+        criterionNodes  = (ce)
+        evaluationNodes = (errs)
+        outputNodes     = (z)
+    }
+
+    SGD=[
+        epochSize=$epochSize$
+        minibatchSize=$minibatchSize$
+        maxEpochs=$maxEpochs$
+        #learningRatesPerMB=0.5
+        learningRatesPerMB=$lr$
+        #learningRatesPerSample = 0.0001220703125
+        #learningRatesPerSample = $eta$/minibatchSize/(1-0.9) 
+#mu: momentum, 0.9
+#eta: learning rate with minibatch-average gradient: 0.05
+#learningRatePerSample = eta / minibatchSize / (1-mu)
+#momentumAsTimeConstant = -minibatchSize / ln (mu)
+        #momentumAsTimeConstant=38876.23386484435
+        #momentumPerSample=0.9
+	    momentumPerMB = 0.9
+        traceLevel = 1 
+        numMBsToShowResult = 10
+
+        parallelTrain=[
+            parallelizationMethod="DataParallelSGD"
+            #parallelizationMethod="BlockMomentumSGD"
+            distributedMBReading=$distributedMBReading$
+            parallelizationStartEpoch=1
+            #syncPerfStats=5
+            dataParallelSGD=[
+                gradientBits=4
+            ]
+        ]
+
+        gradUpdateType=None
+        normWithAveMultiplier=false
+    ]
+
+    reader = [
+        readerType = "CNTKTextFormatReader"
+        file = "$DataDir$/Train-28x28_cntk_text.txt"
+        input = [
+            features = [
+                dim = 784
+                format = "dense"
+            ]
+            labels = [
+                dim = 10
+                format = "dense"
+            ]
+        ]
+    ]   
+
+]
+
+test = [
+    action = "test"
+    minibatchSize = 16
+    epochSize=10000
+
+    reader = [
+        readerType = "CNTKTextFormatReader"
+        file = "$DataDir$/Test-28x28_cntk_text.txt"
+        input = [
+            features = [
+                dim = 784
+                format = "dense"
+            ]
+            labels = [
+                dim = 10
+                format = "dense"
+            ]
+        ]
+    ]
+]

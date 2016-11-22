@@ -1,0 +1,74 @@
+WorkDir=.
+ModelDir=$WorkDir$/_out/$ConfigName$
+DataDir=/home/dl/data/cntk
+stderr=$WorkDir$/_out/$ConfigName$
+
+ndlMacros=$WorkDir$/Macros.ndl
+
+precision=float
+deviceId=1
+
+command=Train
+
+makeMode=false
+
+initOnCPUOnly=true
+numMBsToShowResult=16
+
+#imageLayout="HWC"
+imageLayout="cudnn"
+
+#parallelTrain=false
+
+#prefetch=true
+
+traceLevel=1
+
+Train=[
+    action=train
+    modelPath=$ModelDir$/googlenet
+
+    NDLNetworkBuilder=[
+        networkDescription=$WorkDir$/googlenet.ndl
+    ]
+    
+    SGD=[
+        epochSize=2048
+        #minibatchSize=48
+        minibatchSize=24
+        #minibatchSize=8
+        learningRatesPerMB=0.01
+        momentumPerMB=0
+        maxEpochs=8
+        #gradUpdateType=None
+        #L2RegWeight=0
+        dropoutRate=0
+        
+        #ParallelTrain=[
+        #    parallelizationMethod=DataParallelSGD
+        #    distributedMBReading=true
+        #    parallelizationStartEpoch=1
+        #    DataParallelSGD=[
+        #        gradientBits=1
+        #    ]
+        #]
+
+    ]
+
+    reader=[
+        readerType=UCIFastReader
+        file=$DataDir$/imagenet_data0.5K.txt
+        randomize=None
+        features=[
+            dim=150528
+            start=1
+        ]
+        labels=[
+            dim=1
+            start=0
+    	    labelDim=1000
+    	    labelMappingFile=$DataDir$/labelmap.1K.txt
+        ]
+    ]
+    
+]

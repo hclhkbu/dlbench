@@ -1,0 +1,114 @@
+ConvReLULayer(inp, outMap, inWCount, kW, kH, hStride, vStride, wScale, bValue)
+{
+    convW = Parameter(outMap, inWCount, init = Gaussian, initValueScale = wScale, initOnCPUOnly=$initOnCPUOnly$)
+    conv = Convolution(convW, inp, kW, kH, outMap, hStride, vStride, zeroPadding = true, imageLayout=$imageLayout$)
+    convB = ImageParameter(1, 1, outMap, init = fixedValue, value = bValue, imageLayout=$imageLayout$)
+    convPlusB = Plus(conv, convB);
+    act = RectifiedLinear(convPlusB);
+}
+
+DNNReLULayer(inDim, outDim, x, wScale, bValue)
+{
+    W = Parameter(outDim, inDim, init = Gaussian, initValueScale = wScale, initOnCPUOnly=$initOnCPUOnly$) 
+    b = Parameter(outDim, init = fixedValue, value = bValue, initOnCPUOnly=$initOnCPUOnly$) 
+    t = Times(W, x)
+    z = Plus(t, b)
+    y = RectifiedLinear(z)
+}
+
+InceptionLayer(inp, inDim, conv1Out, conv2Out, conv2_1inDim, conv2_1Out, conv3Out, conv3_1inDim, conv3_1Out, conv4Out)
+{
+    conv1_1 = ConvReLULayer(inp, conv1Out, inDim, 1, 1, 1, 1, 1, 0.2)  
+
+    conv2 = ConvReLULayer(inp, conv2Out, inDim, 1, 1, 1, 1, 1, 0.2)  
+    #conv2_1 = ConvReLULayer(conv2, conv2_1Out, 3*3*conv2Out, 3, 3, 1, 1, 0.2)  
+    conv2_1 = ConvReLULayer(conv2, conv2_1Out, conv2_1inDim, 3, 3, 1, 1, 1, 0.2)  
+
+    conv3 = ConvReLULayer(inp, conv3Out, inDim, 1, 1, 1, 1, 1, 0.2)  
+    #conv3_1 = ConvReLULayer(conv3, conv3_1Out, 3*3*conv3Out, 5, 5, 1, 1, 1, 0.2)  
+    conv3_1 = ConvReLULayer(conv3, conv3_1Out, conv3_1inDim, 5, 5, 1, 1, 1, 0.2)  
+
+    pool4 = MaxPooling(inp, 3, 3, 1, 1, imageLayout=$imageLayout$)
+    conv4 = ConvReLULayer(pool4, conv4Out, inDim, 1, 1, 1, 1, 1, 0.2)
+    concat = RowStack(conv1_1:conv2_1:conv3_1:conv4)
+}
+
+InceptionLayer3a(inp, inDim)
+{
+    concat = InceptionLayer(inp, inDim, 64, 96, 128, 1152, 16, 144, 32, 32) 
+    # conv1Out = 64
+    # conv1 = ConvReLULayer(inDim, conv1Out, 3, 1, 1, 1, 1, 1, 0.2)  
+
+    # conv2Out = 96
+    # conv2_1Out = 128
+    # conv2 = ConvReLULayer(inDim, conv2Out, 3, 1, 1, 1, 1, 1, 0.2)  
+    # conv2_1 = ConvReLULayer(conv2, conv2_1Out, 3, 3, 3, 1, 1, 0.2)  
+
+    # conv3Out = 16
+    # conv3_1Out = 32
+    # conv3 = ConvReLULayer(inDim, conv3Out, 3, 1, 1, 1, 1, 1, 0.2)  
+    # conv3_1 = ConvReLULayer(conv3, conv3_1Out, 3, 5, 5, 1, 1, 1, 0.2)  
+
+    # conv4Out = 32
+    # pool4 = MaxPooling(inDim, 3, 3, 1, 1, imageLayout=$imageLayout$)
+    # conv4 = ConvReLULayer(pool4, conv4Out, 3, 1, 1, 1, 1, 0.2)
+    # concat = RowStack(conv1:conv2_1:conv3_1:conv4)
+}
+
+InceptionLayer3b(inp, inDim)
+{
+    concat = InceptionLayer(inp, inDim, 128, 128, 192, 1728, 32, 288, 96, 64) 
+    # conv1Out = 128 
+    # conv1 = ConvReLULayer(inDim, conv1Out, 3, 1, 1, 1, 1, 1, 0.2)  
+
+    # conv2Out = 128 
+    # conv2_1Out = 192 
+    # conv2 = ConvReLULayer(inDim, conv2Out, 3, 1, 1, 1, 1, 1, 0.2)  
+    # conv2_1 = ConvReLULayer(conv2, conv2_1Out, 3, 3, 3, 1, 1, 0.2)  
+
+    # conv3Out = 32 
+    # conv3_1Out = 96 
+    # conv3 = ConvReLULayer(inDim, conv3Out, 3, 1, 1, 1, 1, 1, 0.2)  
+    # conv3_1 = ConvReLULayer(conv3, conv3_1Out, 3, 5, 5, 1, 1, 1, 0.2)  
+
+    # conv4Out = 64 
+    # pool4 = MaxPooling(inDim, 3, 3, 1, 1, imageLayout=$imageLayout$)
+    # conv4 = ConvReLULayer(pool4, conv4Out, 3, 1, 1, 1, 1, 0.2)
+    # concat = RowStack(conv1:conv2_1:conv3_1:conv4)
+}
+
+InceptionLayer4a(inp, inDim)
+{
+    concat = InceptionLayer(inp, inDim, 92, 96, 208, 1872, 16, 144, 48, 64) 
+}
+
+
+
+BN(inp, mapCount, bValue, scValue, bnTimeConst)
+[
+    b = Parameter(mapCount, 1, init = fixedValue, value = bValue, initOnCPUOnly=$initOnCPUOnly$)
+    sc = Parameter(mapCount, 1, init = fixedValue, value = scValue, initOnCPUOnly=$initOnCPUOnly$)
+    m = Parameter(mapCount, 1, init = fixedValue, value = 0, learningRateMultiplier = 0, initOnCPUOnly=$initOnCPUOnly$)
+    isd = Parameter(mapCount, 1, init = fixedValue, value = 0, learningRateMultiplier = 0, initOnCPUOnly=$initOnCPUOnly$)
+    
+    y = BatchNormalization(inp, sc, b, m, isd, spatial = true, normalizationTimeConstant = bnTimeConst, epsilon = 0.000000001, imageLayout = "cudnn")
+]
+
+
+DNNLastLayer(hiddenDim, labelDim, x, wScale, bValue)
+{
+    W = Parameter(labelDim, hiddenDim, init = Gaussian, initValueScale = wScale, initOnCPUOnly=$initOnCPUOnly$)
+    b = Parameter(labelDim, init = fixedValue, value = bValue, initOnCPUOnly=$initOnCPUOnly$)
+    t = Times(W, x)
+    z = Plus(t, b)
+}
+
+LossBlock(inp, inDim, labelDim)
+{
+    pool = AveragePooling(inp, 5, 5, 3, 3, imageLayout=$imageLayout$)
+    conv1 = ConvReLULayer(pool, 128, inDim, 1, 1, 1, 1, 1, 0.2) 
+    fc1 = DNNReLULayer(128, 1024, conv1, 6.4, 0.2)   
+    fc1_d = Dropout(fc1) # should be 0.7
+    ol = DNNLastLayer(1024, labelDim, fc1_d, 3.2, 0.2)   
+}
+

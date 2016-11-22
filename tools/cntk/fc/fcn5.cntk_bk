@@ -1,0 +1,95 @@
+WorkDir= "."
+ConfigDir= "."
+ModelDir=$WorkDir$/Output
+DataDir=/home/comp/csshshi/data/cntk
+#DataDir=/home/comp/pengfeixu/Data/cntk/mnist
+ndlMacros = "$ConfigDir$/Macros.ndl"
+precision=float
+
+imageLayout = "cudnn"
+
+deviceId=0
+minibatchSize=1024
+epochSize=60000
+maxEpochs=40
+
+makeMode=false
+
+command=train:test
+
+featureDim = 784 
+labelDim = 10 
+numMBsToShowResult=10
+
+initOnCPUOnly=true
+parallelTrain=false
+prefetch=true
+
+train=[
+    action= "train"
+    modelPath="$ModelDir$/fcn5_mnist"
+    traceLevel=1
+
+    NDLNetworkBuilder = [
+        networkDescription = "fcn5_mnist.ndl"
+    ]
+
+    SGD=[
+        epochSize=$epochSize$
+        minibatchSize=$minibatchSize$
+        maxEpochs=$maxEpochs$
+        learningRatesPerMB=0.1
+        numMBsToShowResult=100
+        momentumPerSample=0
+
+        ParallelTrain=[
+            parallelizationMethod=DataParallelSGD
+            distributedMBReading=true
+            parallelizationStartEpoch=1
+            DataParallelSGD=[
+                gradientBits=1
+            ]
+        ]
+
+        gradUpdateType=None
+        normWithAveMultiplier=true
+    ]
+
+    reader = [
+        readerType = "CNTKTextFormatReader"
+        file = "$DataDir$/Train-28x28_cntk_text.txt"
+        input = [
+            features = [
+                dim = 784
+                format = "dense"
+            ]
+            labels = [
+                dim = 10
+                format = "dense"
+            ]
+        ]
+    ]   
+
+]
+
+test = [
+    action = "test"
+    minibatchSize = 16
+    epochSize=10000
+    modelPath="$ModelDir$/fcn5_mnist"
+
+    reader = [
+        readerType = "CNTKTextFormatReader"
+        file = "$DataDir$/Test-28x28_cntk_text.txt"
+        input = [
+            features = [
+                dim = 784
+                format = "dense"
+            ]
+            labels = [
+                dim = 10
+                format = "dense"
+            ]
+        ]
+    ]
+]

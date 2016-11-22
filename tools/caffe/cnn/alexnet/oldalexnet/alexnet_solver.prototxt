@@ -1,0 +1,6 @@
+net: "alexnet-b128.prototxt"
+max_iter: 1000
+display: 100
+base_lr: 0.01
+lr_policy: "fixed"
+solver_mode: GPU
