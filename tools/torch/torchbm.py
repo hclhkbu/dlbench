@@ -58,6 +58,7 @@ elif "lstm" in network:
 	#print "total time: " + str(t)
 	with open(logfile, "a") as logFile:
 		logFile.write("Total time: " + str(t) + "\n")
+		logFile.write(cmd + "\n")
 	os.system("cp " + logfile + " ../../logs")
 	catLog = "cat " + logfile
 	totalEpochBatchTime = subprocess.check_output( catLog + " | grep Speed | cut -d':' -f2 | paste -sd+ - | bc", shell=True).strip()
@@ -116,6 +117,7 @@ os.system(cmd)
 t = time.time() - t
 with open(logfile, "a") as logFile:
 	logFile.write("Total time: " + str(t) + "\n")
+	logFile.write(cmd + "\n")
 os.system("cp " + logfile + " ../../logs")
 #print("Time diff: " + str(t))
 os.system("rm display.tmp")
