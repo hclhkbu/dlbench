@@ -28,7 +28,7 @@ tool_path = root_path + "/" + args.netType
 if os.path.exists(tool_path + "/" + args.network):
 	tool_path = tool_path + "/" + args.network
 os.chdir(tool_path)
-os.system("rm _iter*; ./gen-" + args.network + ".sh")
+os.system("./gen-" + args.network + ".sh")
 log_file = args.log
 if ".log" not in log_file:
 	log_file += ".log"
@@ -37,16 +37,19 @@ cmd = 'caffe train -solver=' + args.network + '-b' + args.batchSize + '-GPU-solv
 cmd += ' >& ' + log_path
 
 ## Execute cmd 
+t = time.time()
 os.system(cmd)
-
+t = time.time() - t
+os.system("rm _iter*")
 ## Parse log file and extract benchmark info
 os.chdir(root_path)
-print(subprocess.check_output("python extract_info.py -f " + log_path + " -t caffe", shell=True))
+print(subprocess.check_output("python ../extract_info.py -f " + log_path + " -t caffe", shell=True))
 
 
 #Save log file
-os.system("sed -i \'1s/^/Total time: " + str(t) + "\n/\'")
-os.system("sed -i \'1s/^/cmd: " + cmd + "\n/\'")
+with open(log_path, "a") as logFile:
+    logFile.write("Total time: " + str(t) + "\n")
+    logFile.write("cmd: " + cmd + "\n")
 os.system("cp " + log_path + " ../../logs")
 
 

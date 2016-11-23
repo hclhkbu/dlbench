@@ -4,7 +4,8 @@ network_name=resnet
 gpu_counts=("1" "2" "4" )
 for batch_size in "${batch_sizes[@]}" 
 do
-    max_iter=`awk "BEGIN {print int((${epoch_size}+${batch_size}-1)/${batch_size}*40)}"` #50000/32 * 40
+    max_iter=`awk "BEGIN {print int((${epoch_size}+${batch_size}-1)/${batch_size}*2)}"` #50000/32 * 40
+#    max_iter=`awk "BEGIN {print int((${epoch_size}+${batch_size}-1)/${batch_size}*40)}"` #50000/32 * 40
     test_interval=`awk "BEGIN {print int((${epoch_size}+${batch_size}-1)/${batch_size})}"` # 50000/32 * 2
     device=GPU
     model_file=${network_name}-b${batch_size}.prototxt

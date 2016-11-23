@@ -5,7 +5,8 @@ gpu_counts=( "1" "2" "4" )
 for batch_size in "${batch_sizes[@]}" 
 do
     batches_per_epoch=`awk "BEGIN {print int( (${epoch_size}+${batch_size}-1)/${batch_size} )}"` #50000/32 
-    max_iter=`awk "BEGIN {print int( ${batches_per_epoch}*40 )}"` #50000/32 * 40
+    max_iter=`awk "BEGIN {print int( ${batches_per_epoch}*2 )}"` #50000/32 * 40
+#    max_iter=`awk "BEGIN {print int( ${batches_per_epoch}*40 )}"` #50000/32 * 40
     display_interval=1 #`awk "BEGIN {print int( ${batches_per_epoch}/4 )}"` # 50000 / 32 
     test_interval=`awk "BEGIN {print int( ${batches_per_epoch} )}"` # 50000/32
     device=GPU
