@@ -1,0 +1,166 @@
+FCN:
+Data: MNIST
+Training Samples: 60000
+Testing Samples: 10000
+Number of Parameters: 13707264 = 13MB
+Experiment configs:
+
+Learning Rate: 0.05
+Evaluate Step: 2 
+-----------------------
+    Batch Size | Epoch
+-----------------------
+    32         | 40
+    -------------------
+    64         | 40
+    -------------------
+    128        | 40
+    -------------------
+    256        | 40
+    -------------------
+    512        | 40
+    -------------------
+    1024       | 40
+    -------------------
+    4096       | 40
+-----------------------
+For multiple GPUs, the batch size are set as follows:
+----------------
+Batch size: 4096 
+----------------
+4096 | 1GPU
+----------------
+2048 | 2GPU
+----------------
+1024 | 4GPU
+----------------
+
+Alexnet:
+Data: Cifar10
+Training Samples: 50000
+Testing Samples: 10000
+Number of Parameters: 85000 = 0.081MB
+
+Origional paper:	
+	https://papers.nips.cc/paper/4824-imagenet-classification-with-deep-convolutional-neural-networks.pdf
+Network setup:
+	https://code.google.com/p/cuda-convnet/source/browse/trunk/example-layers/layer-params-18pct.cfg:
+    deplecated
+	https://code.google.com/p/cuda-convnet/source/browse/trunk/example-layers/layers-18pct.cfg:
+    deplecated
+
+    https://github.com/dnouri/cuda-convnet/blob/master/example-layers/layers-18pct.cfg
+    https://github.com/dnouri/cuda-convnet/blob/master/example-layers/layer-params-18pct.cfg
+
+Learning Rate: 0.01
+Evaluate Step: 2 
+-----------------------
+    Batch Size | Epoch
+-----------------------
+    -------------------
+    32         | 40
+    -------------------
+    64         | 40
+    -------------------
+    128        | 40
+    -------------------
+    256        | 40
+    -------------------
+    512        | 40
+    -------------------
+    1024       | 40
+-----------------------
+For multiple GPUs, the batch size are set as follows:
+----------------
+Batch size: 1024 
+----------------
+1024 | 1GPU
+----------------
+512  | 2GPU
+----------------
+256  | 4GPU
+----------------
+
+	
+Resnet:
+Data: Cifar10
+Training Samples: 50000
+Testing Samples: 10000
+Number of Parameters: 0.85M 
+
+Origional paper:
+	https://arxiv.org/pdf/1512.03385v1.pdf
+Network setup reference (torch based):
+	https://github.com/gcr/torch-residual-networks
+	https://github.com/gcr/torch-residual-networks/blob/23ddff357b206dcbd376b2a873df92d87c9aac67/residual-layers.lua#L55-L57
+	NN:
+	The code implement the stretage Alternate 1: "Batch Norm after add". However, some other people found that adding a ReLU layer after Batch Norm layer would converge slower(no formal proof, ref: http://www.gitxiv.com/comments/7rffyqcPLirEEsmpX). The author actually suggests removing the ReLU layer after Batch Norm, then we have our NN architecture as follows:
+					               Input
+							 |
+						 ,-------+-----.
+				        Downsampling      3x3 convolution+dimensionality reduction
+						|               |
+						|	   Batch Norm
+						|		|
+						|	      ReLU
+						|		|
+				         Zero-padding      3x3 convolution
+						|               |
+						`-----( Add )---'
+							 |
+						    Batch Norm
+							 |
+						       Output
+	Note that for torch networks config, https://github.com/gcr/torch-residual-networks/blob/master/residual-layers.lua#L89	should be removed
+	Let's set Nsize=9 for our benchmark
+
+Learning Rate: 0.01
+Evaluate Step: 2 
+-----------------------
+    Batch Size | Epoch
+-----------------------
+    8          | 40
+    -------------------
+    16         | 40
+    -------------------
+    32         | 40
+    -------------------
+    64         | 40
+    -------------------
+    128        | 40
+    -------------------
+    256        | 40
+-----------------------
+For multiple GPUs, the batch size are set as follows:
+----------------
+Batch size: 128 
+----------------
+128  | 1GPU
+----------------
+64   | 2GPU
+----------------
+32   | 4GPU
+----------------
+
+
+RNN: LSTM
+
+Ref paper:
+http://arxiv.org/abs/1409.2329
+Learning Rate: 1.0
+Evaluate Step: 2 
+-----------------------
+    Batch Size | Epoch
+-----------------------
+    32         | 20
+    -------------------
+    64         | 20
+    -------------------
+    128        | 20
+    -------------------
+    256        | 20
+    -------------------
+    512        | 20
+    -------------------
+    1024       | 20
+-----------------------
