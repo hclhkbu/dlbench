@@ -37,19 +37,16 @@ cmd = 'caffe train -solver=' + args.network + '-b' + args.batchSize + '-GPU-solv
 cmd += ' >& ' + log_path
 
 ## Execute cmd 
-t = time.time()
 os.system(cmd)
-t = time.time() - t
 
 ## Parse log file and extract benchmark info
+os.chdir(root_path)
 print(subprocess.check_output("python extract_info.py -f " + log_path + " -t caffe", shell=True))
 
 
 #Save log file
-with open(log_path, "a") as logFile:
-    logFile.write("Total time: " + str(t) + "\n")
-    logFile.write("cmd: " + cmd + "\n")
-os.chdir(root_path)
+os.system("sed -i \'1s/^/Total time: " + str(t) + "\n/\'")
+os.system("sed -i \'1s/^/cmd: " + cmd + "\n/\'")
 os.system("cp " + log_path + " ../../logs")
 
 
