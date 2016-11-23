@@ -9,7 +9,7 @@ parser = argparse.ArgumentParser(description='Python script benchmarking mxnet')
 parser.add_argument('-log', type=str, default=('mxnet_' + current_time + '.log').replace(" ", "_"),
         help='Name of log file, default= mxnet_ + current time + .log') 
 parser.add_argument('-batchSize', type=str, default='64', help='Batch size for each GPU, default = 64')
-parser.add_argument('-network', type=str, default='fcn5', help='name of network[fcn5 | alexnet | resnet | lstm32 | lstm64]')
+parser.add_argument('-network', type=str, default='fcn5', help='name of network[fcn5 | alexnet | resnet | lstm | lstm32 | lstm64]')
 parser.add_argument('-devId', type=str, help='CPU: -1, GPU:0,1,2,3(Multiple gpu supported)')
 parser.add_argument('-numEpochs', type=str, default='10', help='number of epochs, default=10')
 parser.add_argument('-epochSize', type=str, default='50000', help='number of training data per epoch')
@@ -23,26 +23,35 @@ args = parser.parse_args()
 
 
 # Build cmd for benchmark
-cmd = ''
+root_path = os.path.dirname(os.path.abspath(__file__))
+tool_path = root_path + "/" + args.netType
+if os.path.exists(tool_path + "/" + args.network):
+	tool_path = tool_path + "/" + args.network
+os.chdir(tool_path)
+log_file = args.log
+if ".log" not in log_file:
+	log_file += ".log"
+log_path = os.getcwd() + "/" + log_file
+cmd =  ' deviceId=' + args.devId + ' batch_size=' + args.batchSize +' epochs=' + args.numEpochs 
+if int(args.gpuCount) > 1:
+	cmd += ' gpu_count=' + args.gpuCount + ' ./tm.sh '
+else:
+	cmd += ' ./t.sh '
+cmd += ' >& ' + log_path
 
-
-# Execute cmd 
+## Execute cmd 
 t = time.time()
 os.system(cmd)
 t = time.time() - t
-#print("Time diff: " + str(t))
+## Parse log file and extract benchmark info
+os.chdir(root_path)
+print(subprocess.check_output("python ../extract_info.py -f " + log_path + " -t tensorflow", shell=True))
 
 
 #Save log file
-logPath = '' 
-with open(logPath, "a") as logFile:
+with open(log_path, "a") as logFile:
     logFile.write("Total time: " + str(t) + "\n")
     logFile.write("cmd: " + cmd + "\n")
-os.system("cp " + logPath + " ../../logs")
+os.system("cp " + log_path + " ../../logs")
 
 
-# Parse log file and extract benchmark info
-avgBatch = (avgEpoch/int(numSamples))*float(batchSize)
-#print("Avg Batch: " + str(avgBatch))
-info = ''
-print "-t " + str(t) + " -a " + str(avgBatch) + " -I " + info

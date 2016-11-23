@@ -37,16 +37,15 @@ if int(args.gpuCount) > 1:
 	cmd = 'CUDA_VISIBLE_DEVICES=' + args.devId + cmd + ' gpu_count=' + args.gpuCount + ' ./tm.sh '
 else:
 	cmd += ' ./t.sh '
-cmd += ' >& ' + log_path
+cmd += ' > ' + log_path + ' 2>&1'
 
 ## Execute cmd 
 t = time.time()
 os.system(cmd)
 t = time.time() - t
-os.system("rm -rf Output/*")
 ## Parse log file and extract benchmark info
 os.chdir(root_path)
-print(subprocess.check_output("python ../extract_info.py -f " + log_path + " -t cntk", shell=True))
+print(subprocess.check_output("python ../extract_info.py -f " + log_path + " -t tensorflow", shell=True))
 
 
 #Save log file
