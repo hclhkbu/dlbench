@@ -1,7 +1,7 @@
 batch_sizes=( "8" "16" "32" "64" "128" "256" )
 epoch_size=50000
 network_name=resnet
-gpu_counts=( "2" "4" )
+gpu_counts=("1" "2" "4" )
 for batch_size in "${batch_sizes[@]}" 
 do
     max_iter=`awk "BEGIN {print int((${epoch_size}+${batch_size}-1)/${batch_size}*40)}"` #50000/32 * 40

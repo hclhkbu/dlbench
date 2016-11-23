@@ -1,7 +1,7 @@
 batch_sizes=( "32" "64" "128" "256" "512" "1024" "2048" "4096" )
 epoch_size=60000
 network_name=fcn5
-gpu_counts=( "2" "4" )
+gpu_counts=( "1" "2" "4" )
 for batch_size in "${batch_sizes[@]}" 
 do
     batches_per_epoch=`awk "BEGIN {print int( (${epoch_size}+${batch_size}-1)/${batch_size} )}"` #50000/32 
