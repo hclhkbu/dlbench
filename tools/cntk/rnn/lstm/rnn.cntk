@@ -5,7 +5,7 @@
 RootDir = "."
 
 ConfigDir = "$RootDir$"
-DataDir   = "$RootDir$/Data"
+DataDir   = "/home/comp/pengfeixu/data/cntk/ptb"
 OutputDir = "$RootDir$/Output"
 ModelDir  = "$OutputDir$/Models"
 
