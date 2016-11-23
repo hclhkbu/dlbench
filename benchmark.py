@@ -64,6 +64,9 @@ post_flags = " -f " + flag + " -d " + device_name + " -c 1" + " -P " + cpu_name 
 # Benchmark each tool
 root_path = os.path.dirname(os.path.abspath(__file__))
 host_name = subprocess.check_output("hostname", shell=True).strip().split('\n')[0]
+if os.path.exists(root_path + "/logs/") is not True:
+	print "Creating log directory... " + root_path + "/logs/"
+	os.system("mkdir logs")
 #print host_name
 #print root_path
 for tool in tools:
