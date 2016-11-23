@@ -79,7 +79,7 @@ for tool in tools:
 		log_file += time.ctime()+ "-" + host_name + ".log"
 		log_file = log_file.replace(" ","_")
 		bm_script = "python " + tool + "bm.py" 
-		bm_script += " -log " + log_file + " -batchSize " + exp_args[4] + " -network " + exp_args[1] + " -lr " + exp_args[7]
+		bm_script += " -netType "+exp_args[0]+" -log "+log_file+" -batchSize "+exp_args[4]+" -network "+exp_args[1]+" -lr "+exp_args[7]
 		bm_script += " -devId " + exp_args[2] + " -numEpochs " + exp_args[5] + " -epochSize " + exp_args[6] + " -gpuCount " + exp_args[3]
 		if host_file is not None:
 			bm_script += " -hostFile " + host_file

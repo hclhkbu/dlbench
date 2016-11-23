@@ -17,6 +17,7 @@ parser.add_argument('-numThreads', type=str, default='8', help='number of Thread
 parser.add_argument('-hostFile', type=str, help='path to running hosts(config in host file) for multiple machine training.')
 parser.add_argument('-gpuCount', type=str, help='number of gpus in used')
 parser.add_argument('-lr', type=str, help='learning rate')
+parser.add_argument('-netType', type=str, help='network type')
 args = parser.parse_args()
 #print(args)
 
