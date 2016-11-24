@@ -28,7 +28,9 @@ tool_path = root_path + "/" + args.netType
 if os.path.exists(tool_path + "/" + args.network):
 	tool_path = tool_path + "/" + args.network
 os.chdir(tool_path)
-os.system("./gen-" + args.network + ".sh")
+gencmd = 'num_epochs=%s gpu_count=%s learning_rate=%s batch_size=%s ./gen-%s.sh' % (args.numEpochs, args.gpuCount, args.lr, args.batchSize, args.network)
+#os.system("./gen-" + args.network + ".sh")
+os.system(gencmd)
 log_file = args.log
 if ".log" not in log_file:
 	log_file += ".log"

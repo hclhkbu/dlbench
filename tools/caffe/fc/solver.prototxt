@@ -1,6 +1,6 @@
 # The train/test net protocol buffer definition
 net: "fcn5-bBATCHSIZE.prototxt"
-base_lr: 0.05
+base_lr: LR 
 lr_policy: "fixed"
 max_iter: MAXITER 
 display: DISPLAYINTERVAL 
