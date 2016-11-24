@@ -52,6 +52,6 @@ print(subprocess.check_output("python ../common/extract_info.py -f " + log_path 
 with open(log_path, "a") as logFile:
     logFile.write("Total time: " + str(t) + "\n")
     logFile.write("cmd: " + cmd + "\n")
-os.system("cp " + log_path + " ../../logs")
+os.system("mv " + log_path + " ../../logs")
 
 

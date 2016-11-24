@@ -6,5 +6,6 @@ end=`date +%s.%N`
 runtime=$( echo "$end - $start" | bc -l )
 echo "finished with execute time: ${runtime}" 
 python cifar10_eval.py 
-rm trained_models/*
 #deactivate 
+rm trained_models/*
+rm train_eval/* 

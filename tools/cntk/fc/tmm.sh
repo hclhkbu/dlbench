@@ -1,4 +1,3 @@
-rm -rf Output/*
 start=`date +%s.%N`
 network=fcn5
 model_file=${network}.cntk
@@ -12,3 +11,4 @@ runtime=$( echo "$end - $start" | bc -l )
 echo "GPUCount: ${gpu_count}"
 echo "MinibatchSize: ${minibatchSize}" 
 echo "finished with execute time: ${runtime}" 
+rm -rf Output/*
