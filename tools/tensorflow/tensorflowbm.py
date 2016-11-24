@@ -45,7 +45,7 @@ os.system(cmd)
 t = time.time() - t
 ## Parse log file and extract benchmark info
 os.chdir(root_path)
-print(subprocess.check_output("python ../extract_info.py -f " + log_path + " -t tensorflow", shell=True))
+print(subprocess.check_output("python ../common/extract_info.py -f " + log_path + " -t tensorflow", shell=True))
 
 
 #Save log file
