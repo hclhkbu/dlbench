@@ -1,4 +1,4 @@
-tool=`printf "${PWD##*/}"`
+tool=caffe
 
 # Single GPU test
 python $tool\bm.py -log debug -batchSize 1024 -network fcn5 -devId 0 -numEpochs 2 -epochSize 60000 -gpuCount 1 -lr 0.05 -netType fc
