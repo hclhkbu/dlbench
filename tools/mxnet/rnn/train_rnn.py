@@ -8,6 +8,8 @@ import mxnet as mx
 from bucket_io import MyBucketSentenceIter, BucketSentenceIter, default_build_vocab
 
 
+#os.environ["MXNET_CUDNN_AUTOTUNE_DEFAULT"] = "1"
+
 #data_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), 'data'))
 
 

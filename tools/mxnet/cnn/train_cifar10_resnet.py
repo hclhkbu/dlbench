@@ -48,12 +48,16 @@ import os
 import logging
 import numpy as np
 
+
+os.environ["MXNET_CUDNN_AUTOTUNE_DEFAULT"] = "1"
+
+
 parser = argparse.ArgumentParser(description='train an image classifer on cifar10')
 parser.add_argument('--data-dir', type=str, default= os.environ['HOME'] + '/data/mxnet/cifar10_32/',
                     help='the input data directory')
 parser.add_argument('--num-nodes', type=int, default=1,
                     help='number of nodes')
-parser.add_argument('--optimizer', type=str, default="Nesterov",
+parser.add_argument('--optimizer', type=str, default="ccSGD",
 		    help='Optimizer options: Nesterov | SGD | NAG ... see http://mxnet.io/api/python/model.html')
 parser.add_argument('--gpus', type=str,
                     help='the gpus will be used, e.g "0,1,2,3"')
