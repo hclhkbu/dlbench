@@ -39,8 +39,8 @@ Kaiming He, Xiangyu Zhang, Shaoqing Ren, Jian Sun. "Deep Residual Learning for I
 '''
 from __future__ import division
 import sys
-sys.path[1] = '/home/comp/pengfeixu/.local/lib/python2.7/site-packages/mxnet-0.7.0-py2.7.egg'
-print sys.path
+#sys.path[1] = '/home/comp/pengfeixu/.local/lib/python2.7/site-packages/mxnet-0.7.0-py2.7.egg'
+#print sys.path
 import mxnet as mx
 import argparse
 import math
