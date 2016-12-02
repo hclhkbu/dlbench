@@ -51,6 +51,7 @@ Network setup:
 
     https://github.com/dnouri/cuda-convnet/blob/master/example-layers/layers-18pct.cfg
     https://github.com/dnouri/cuda-convnet/blob/master/example-layers/layer-params-18pct.cfg
+    Without LRN layer
 
 Learning Rate: 0.01
 Evaluate Step: 2 
