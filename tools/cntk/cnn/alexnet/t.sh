@@ -1,4 +1,4 @@
-#rm -rf Output/*
+rm -rf Output/*
 start=`date +%s.%N`
 network=alexnet
 dataset="${dataset:-cifar10}"
@@ -14,4 +14,4 @@ runtime=$( echo "$end - $start" | bc -l )
 echo "GPUCount: 1" 
 echo "MinibatchSize: ${minibatchSize}" 
 echo "finished with execute time: ${runtime}" 
-#rm -rf Output/*
+rm -rf Output/*
