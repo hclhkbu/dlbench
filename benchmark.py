@@ -96,7 +96,7 @@ for tool in tools:
 		os.chdir(root_path)
 		post_script = "python post_record.py " + post_flags
 		print post_script
-		print(subprocess.check_output(post_script, shell=True).strip().split('\n')[0])
+		#print(subprocess.check_output(post_script, shell=True).strip().split('\n')[0])
 		print "Done!"
 
 
