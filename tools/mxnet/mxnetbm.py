@@ -85,7 +85,7 @@ if ".log" not in logfile:
 #cmd += " &> " + logfile
 cmd += " >& " + logfile
 t = time.time()
-print cmd
+#print cmd
 os.system(cmd)
 t = time.time() - t
 #print("Time diff: " + str(t))
