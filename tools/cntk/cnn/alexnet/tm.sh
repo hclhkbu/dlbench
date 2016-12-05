@@ -1,10 +1,15 @@
+rm -rf Output/*
 start=`date +%s.%N`
 network=alexnet
-model_file=${network}.cntk
-cp $network.cntk_template ${model_file}
-sed -i -e "s|HOME|${HOME}|g" ${model_file}
+dataset="${dataset:-cifar10}"
+model_file=${network}_${dataset}.cntk
+if [ ${dataset} = 'cifar10' ]
+then
+    cp $network.cntk_template ${model_file}
+    sed -i -e "s|HOME|${HOME}|g" ${model_file}
+fi
 batchSizeForCNTK=`awk "BEGIN {print ${minibatchSize}*${gpu_count} }"` 
-mpirun -n ${gpu_count} cntk configFile=alexnet.cntk deviceId=auto minibatchSize=$batchSizeForCNTK maxEpochs=$maxEpochs parallelTrain=true epochSize=0
+mpirun -n ${gpu_count} cntk configFile=$model_file deviceId=auto minibatchSize=$batchSizeForCNTK maxEpochs=$maxEpochs parallelTrain=true epochSize=0
 end=`date +%s.%N`
 runtime=$( echo "$end - $start" | bc -l )
 echo "GPUCount: ${gpu_count}"
