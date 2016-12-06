@@ -1,6 +1,6 @@
 net: "alexnet_imagenet.prototxt"
-test_iter: 1000
-test_interval: 1000
+test_iter: 250
+test_interval: 5000
 base_lr: 0.01
 lr_policy: "step"
 gamma: 0.1
