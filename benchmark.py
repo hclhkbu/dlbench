@@ -97,8 +97,13 @@ for tool in tools:
 		post_script = "python post_record.py " + post_flags
 		print post_script
 		print(subprocess.check_output(post_script, shell=True).strip().split('\n')[0])
+<<<<<<< HEAD
                 post_flags = " -f " + flag + " -d " + device_name + " -c 1" + " -P " + cpu_name + " -A unknown" + " -r " + cuda_driver + " -C " + cuda + " -D " + cudnn
                 post_script = ''
+=======
+		post_flags = " -f " + flag + " -d " + device_name + " -c 1" + " -P " + cpu_name + " -A unknown" + " -r " + cuda_driver + " -C " + cuda + " -D " + cudnn
+		post_script = ''
+>>>>>>> 64616c290f66325a8a85240f3f8ca1d4b3e0eef2
 		print "Done!"
 
 

@@ -48,7 +48,6 @@ os.chdir(root_path)
 print(subprocess.check_output("python ../common/extract_info.py -f " + log_path + " -t tensorflow", shell=True))
 #os.system("cat " + log_path)
 
-
 #Save log file
 with open(log_path, "a") as logFile:
     logFile.write("Total time: " + str(t) + "\n")
