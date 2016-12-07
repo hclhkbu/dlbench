@@ -4,7 +4,8 @@
 ###########
 # CNN
 ###########
-REPO_HOME=/home/comp/csshshi/repositories/dpBenchmark/synthetic
+#REPO_HOME=/home/comp/csshshi/repositories/dpBenchmark/synthetic
+REPO_HOME=/home/ipdps/dpBenchmark/synthetic
 current_path=$REPO_HOME/scripts
 experiments_path=$REPO_HOME/experiments
 log_path=$REPO_HOME/logs
@@ -22,8 +23,9 @@ device_id="${device_id:-0}"
 
 OMP_NUM_THREADS="${OMP_NUM_THREADS:-1}"
 FLAG="${FLAG:-syntheticSgbenchmark2}" # start from 1 
-cpu_name="E5-2630v3"
-device_name=K80
+#cpu_name="E5-2630v3"
+cpu_name="i7-3820"
+device_name="${device_name:-K80}"
 epoch_size=null
 cuda="8.0"
 cudnn="5.1"
@@ -173,8 +175,10 @@ do
         elif [ ${tool} = "tensorflow" ]
         then
             #. ../../export-local-var.sh
+            source ~/tf11/bin/activate
             python ${network_name}bm.py -e ${epochs} -b ${minibatch} -i ${iterations} -d ${device_id} >& ${tmplog}
             time_in_second=`cat ${tmplog} | tail -n1 | awk '{print $8}'`
+            deactivate
         elif [ ${tool} = "torch" ]
         then
             . /usr/local/torch/bin/torch-activate

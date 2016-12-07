@@ -4,7 +4,8 @@
 ###########
 # CNN
 ###########
-REPO_HOME=/home/comp/csshshi/repositories/dpBenchmark/synthetic
+REPO_HOME=/home/ipdps/dpBenchmark/synthetic
+#REPO_HOME=/home/comp/csshshi/repositories/dpBenchmark/synthetic
 current_path=$REPO_HOME/scripts
 experiments_path=$REPO_HOME/experiments
 log_path=$REPO_HOME/logs
@@ -21,9 +22,10 @@ network_name="${network_name:-ffn26752}" # ffn, ffn26752
 device_id="${device_id:-0}"
 
 OMP_NUM_THREADS="${OMP_NUM_THREADS:-1}"
-FLAG="${FLAG:-syntheticSgbenchmark2}" # start from 2 
-cpu_name="E5-2630v3"
-device_name=K80
+#FLAG="${FLAG:-syntheticSgbenchmark2}" # start from 2 
+FLAG="${FLAG:-testcpu}" # start from 2 
+cpu_name="i7-3820"
+device_name="${device_name:-K80}"
 epoch_size=null
 cuda="8.0"
 cudnn="5.1"
@@ -162,9 +164,10 @@ do
             rm -rf Output/*
         elif [ ${tool} = "tensorflow" ]
         then
-            . ../export-local-var.sh
+            source ~/tf11/bin/activate
             python ${network_name}bm.py -e ${epochs} -b ${minibatch} -i ${iterations} -d ${device_id} >& ${tmplog}
             time_in_second=`cat ${tmplog} | tail -n1 | awk '{print $8}'`
+            deactivate
         elif [ ${tool} = "torch" ]
         then
             th ${network_name}bm.lua -depth 50 -nGPU 1 -nThreads 2 -deviceId ${device_id} -batchSize ${minibatch} -shareGradInput true -nEpochs ${epochs} -nIterations ${iterations} -dataset imagenet -data ~/data/ >& ${tmplog}
