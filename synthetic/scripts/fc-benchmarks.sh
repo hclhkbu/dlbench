@@ -4,8 +4,10 @@
 ###########
 # CNN
 ###########
-current_path=/home/comp/csshshi/ccbd2016/scripts
-experiments_path=/home/comp/csshshi/ccbd2016/experiments
+REPO_HOME=/home/comp/csshshi/repositories/dpBenchmark/synthetic
+current_path=$REPO_HOME/scripts
+experiments_path=$REPO_HOME/experiments
+log_path=$REPO_HOME/logs
 
 retrain_step=1
 
@@ -18,11 +20,21 @@ network_type="${network_type:-fc}" # fc
 network_name="${network_name:-ffn26752}" # ffn, ffn26752 
 device_id="${device_id:-0}"
 
-running_time=`date`
+OMP_NUM_THREADS="${OMP_NUM_THREADS:-1}"
+FLAG="${FLAG:-syntheticSgbenchmark2}" # start from 2 
+cpu_name="E5-2630v3"
+device_name=K80
+epoch_size=null
+cuda="8.0"
+cudnn="5.1"
+cuda_driver="367.48"
+
+running_time=`date +"%Y%m%d-%H:%M:%S"`
+hostName=`hostname`
 
 #tools=( "caffe" "cntk" "dsstne" "tensorflow" "torch" )
-#tools=( "caffe" "cntk" "tensorflow" "torch" ) #cpu versions, exclude dsstne
-tools=( "caffe" )
+tools=( "caffe" "cntk" "tensorflow" "torch" ) #cpu versions, exclude dsstne
+#tools=( "caffe" )
 benchmark_logfile=${current_path}/${network_type}-${network_name}-gpu${device_id}.bm
 echo -e 'GPU:'${device_id}'\nNUM_THREADS (for CPU): '${OMP_NUM_THREADS}'\nNetwork: '${network_name}'\nEpochs: '${epochs}'\nMinibatch: '${minibatch}'\nIterations: '${iterations}'\nBenchmark Time: '${running_time}'\n_________________\n'>> ${benchmark_logfile}
 echo -e 'ToolName\t\t\tAverageTime(s)'>>${benchmark_logfile}
@@ -36,7 +48,15 @@ do
     cd ${tool_path}
     total_time=0.0
     echo 'start to benchmark: '${tool}'...'
-    tmplog=${network_type}-${network_name}-gpu${device_id}.log
+    device=gpu${device_id}
+    if [ ${device_id} -gt -1 ]
+    then
+        device=gpu${device_id}
+    else
+        device=cpu${OMP_NUM_THREADS}
+    fi
+    tmplog=${tool}-${network_type}-${network_name}-${device}-${device_name}-b${minibatch}-${running_time}-${hostName}.log
+
     tmpresultlog=result-${network_type}-${network_name}-gpu${device_id}.bm
     echo -e 'GPU:'${device_id}'\nNetwork: '${network_name}'\nEpochs: '${epochs}'\nMinibatch: '${minibatch}'\nIterations: '${iterations}'\n_________________\n'>> ${tmpresultlog}
     #echo -e 'Epochs: '${epochs}'\nMinibatch: '${minibatch}'\nIterations: '${iterations}'\n_________________\n'> ${tmpresultlog}
@@ -186,6 +206,13 @@ do
     average_time=`awk "BEGIN {print ${total_time} / ${retrain_step}}"`
     echo ${tool}' finished, avevrage time: '${average_time}
     echo -e ${tool}'\t\t\t'${average_time}>>${benchmark_logfile}
+
+    mv $tmplog $log_path/
+    cd $current_path
+    subargs="-a ${average_time}"
+    args="-f ${FLAG} -n ${network_name} -b ${minibatch} -d ${device_name} -g 1 -c ${OMP_NUM_THREADS} -P ${cpu_name} -e ${epoch_size} -E ${epochs} -A unknown -l ${tmplog} -T ${tool} ${subargs}"
+    python post_record.py ${args}
+
 done
 echo -e '\n\n\n'>>${benchmark_logfile}
 

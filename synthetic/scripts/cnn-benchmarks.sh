@@ -21,7 +21,7 @@ network_name="${network_name:-alexnet}"
 device_id="${device_id:-0}"
 
 OMP_NUM_THREADS="${OMP_NUM_THREADS:-1}"
-FLAG="${FLAG:-syntheticSgbenchmark1}" # start from 1 
+FLAG="${FLAG:-syntheticSgbenchmark2}" # start from 1 
 cpu_name="E5-2630v3"
 device_name=K80
 epoch_size=null
@@ -33,8 +33,8 @@ running_time=`date +"%Y%m%d-%H:%M:%S"`
 hostName=`hostname`
 
 
-#tools=( "caffe" "cntk" "tensorflow" "torch" )
-tools=( "cntk" )
+tools=( "caffe" "cntk" "tensorflow" "torch" )
+#tools=( "cntk" )
 benchmark_logfile=${current_path}/${network_type}-${network_name}-gpu${device_id}.bm
 echo -e 'GPU:'${device_id}'\nNUM_THREADS (for CPU): '${OMP_NUM_THREADS}'\nNetwork: '${network_name}'\nEpochs: '${epochs}'\nMinibatch: '${minibatch}'\nIterations: '${iterations}'\nBenchmark Time: '${running_time}'\n_________________\n'>> ${benchmark_logfile}
 echo -e 'ToolName\t\t\tAverageTime(s)'>>${benchmark_logfile}
