@@ -370,7 +370,7 @@ def fit(args, network, data_loader, batch_end_callback=None):
     else:
         batch_end_callback = []
     batch_end_callback.append(mx.callback.Speedometer(args.batch_size, int((args.num_examples/args.num_nodes)/args.batch_size)))
-    #batch_end_callback.append(mx.callback.Speedometer(args.batch_size, 5))
+    #batch_end_callback.append(mx.callback.Speedometer(args.batch_size, 1))
 
     model.fit(
         X=train,

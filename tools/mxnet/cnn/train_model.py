@@ -51,8 +51,7 @@ def fit(args, network, data_loader, batch_end_callback=None):
     (train, val) = data_loader(args, kv)
 
     # train
-    devs = mx.cpu() if args.gpus is None else [
-        mx.gpu(int(i)) for i in args.gpus.split(',')]
+    devs = mx.cpu() if args.gpus is None else [ mx.gpu(int(i)) for i in args.gpus.split(',')]
 
     epoch_size = args.num_examples / args.batch_size
 
@@ -92,6 +91,7 @@ def fit(args, network, data_loader, batch_end_callback=None):
     else:
         batch_end_callback = []
     batch_end_callback.append(mx.callback.Speedometer(args.batch_size, int((args.num_examples/args.num_nodes)/args.batch_size)))
+    #batch_end_callback.append(mx.callback.Speedometer(args.batch_size, 1))
 
     model.fit(
         X                  = train,
