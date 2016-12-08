@@ -217,9 +217,8 @@ do
     mv $tmplog $log_path/
     cd $current_path
     subargs="-a ${average_time}"
-    if [ ${device_id} -gt -1 ]
+    if [ ${device_id} -eq -1 ]
     then
-    else
         device_name=$cpu_name
     fi
 

@@ -213,9 +213,8 @@ do
     mv $tmplog $log_path/
     cd $current_path
     subargs="-a ${average_time}"
-    if [ ${device_id} -gt -1 ]
+    if [ ${device_id} -eq -1 ]
     then
-    else
         device_name=$cpu_name
     fi
     args="-f ${FLAG} -n ${network_name} -b ${minibatch} -d ${device_name} -g 1 -c ${OMP_NUM_THREADS} -P ${cpu_name} -e ${epoch_size} -E ${epochs} -A unknown -l ${tmplog} -T ${tool} ${subargs}"
