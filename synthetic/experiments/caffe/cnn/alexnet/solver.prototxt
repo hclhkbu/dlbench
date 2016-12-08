@@ -1,0 +1,7 @@
+# The train/test net protocol buffer definition
+net: "alexnet-b128.prototxt"
+base_lr: 0.01
+lr_policy: "fixed"
+max_iter: 1000 
+display: 100
+solver_mode: GPU

@@ -7,49 +7,9 @@ layer {
   include {
     phase: TRAIN
   }
-  #transform_param {
-  #  mirror: true
-  #  crop_size: 224
-  #  mean_file: "/home/dataset/caffe/imagenet_mean.binaryproto"
-  #}
-# mean pixel / channel-wise mean instead of mean image
-  transform_param {
-    crop_size: 224
-    mean_value: 114
-    mean_value: 114
-    mean_value: 114
-    mirror: false 
-  }
   data_param {
-    source: "/home/datasets/imagenet/caffe/ilsvrc12_train_lmdb"
-    batch_size: 256
-    backend: LMDB
-  }
-}
-layer {
-  name: "data"
-  type: "Data"
-  top: "data"
-  top: "label"
-  include {
-    phase: TEST
-  }
-  #transform_param {
-  #  mirror: false
-  #  crop_size: 224
-  #  mean_file: "data/ilsvrc12/imagenet_mean.binaryproto"
-  #}
-# mean pixel / channel-wise mean instead of mean image
-  transform_param {
-    crop_size: 224
-    mean_value: 114
-    mean_value: 114
-    mean_value: 114
-    mirror: false
-  }
-  data_param {
-    source: "/home/datasets/imagenet/caffe/ilsvrc12_val_lmdb"
-    batch_size: 200
+    source: "/home/comp/csshshi/data/caffe/fake_image_net.lmdb"
+    batch_size: 24 
     backend: LMDB
   }
 }
@@ -87,20 +47,9 @@ layer {
   top: "conv1"
 }
 layer {
-  name: "norm1"
-  type: "LRN"
-  bottom: "conv1"
-  top: "norm1"
-  lrn_param {
-    local_size: 5
-    alpha: 0.0001
-    beta: 0.75
-  }
-}
-layer {
   name: "pool1"
   type: "Pooling"
-  bottom: "norm1"
+  bottom: "conv1"
   top: "pool1"
   pooling_param {
     pool: MAX
@@ -108,7 +57,6 @@ layer {
     stride: 2
   }
 }
-
 layer {
   name: "conv2"
   type: "Convolution"
@@ -126,14 +74,13 @@ layer {
     num_output: 256
     pad: 2
     kernel_size: 5
-    group: 2
     weight_filler {
       type: "gaussian"
       std: 0.01
     }
     bias_filler {
       type: "constant"
-      value: 0
+      value: 0.1
     }
   }
 }
@@ -143,23 +90,10 @@ layer {
   bottom: "conv2"
   top: "conv2"
 }
-
-layer {
-  name: "norm2"
-  type: "LRN"
-  bottom: "conv2"
-  top: "norm2"
-  lrn_param {
-    local_size: 5
-    alpha: 0.0001
-    beta: 0.75
-  }
-}
-
 layer {
   name: "pool2"
   type: "Pooling"
-  bottom: "norm2"
+  bottom: "conv2"
   top: "pool2"
   pooling_param {
     pool: MAX
@@ -167,11 +101,10 @@ layer {
     stride: 2
   }
 }
-
 layer {
   name: "conv3"
   type: "Convolution"
-  bottom: "norm2"
+  bottom: "pool2"
   top: "conv3"
   param {
     lr_mult: 1
@@ -218,14 +151,13 @@ layer {
     num_output: 384
     pad: 1
     kernel_size: 3
-    #group: 2
     weight_filler {
       type: "gaussian"
       std: 0.01
     }
     bias_filler {
       type: "constant"
-      value: 1
+      value: 0.1
     }
   }
 }
@@ -252,14 +184,13 @@ layer {
     num_output: 256
     pad: 1
     kernel_size: 3
-    group: 2
     weight_filler {
       type: "gaussian"
       std: 0.01
     }
     bias_filler {
       type: "constant"
-      value: 0
+      value: 0.1
     }
   }
 }
@@ -301,16 +232,16 @@ layer {
     }
     bias_filler {
       type: "constant"
-      value: 1
+      value: 0.1
     }
   }
 }
-#layer {
-#  name: "relu6"
-#  type: "ReLU"
-#  bottom: "fc6"
-#  top: "fc6"
-#}
+layer {
+  name: "relu6"
+  type: "ReLU"
+  bottom: "fc6"
+  top: "fc6"
+}
 layer {
   name: "drop6"
   type: "Dropout"
@@ -341,16 +272,16 @@ layer {
     }
     bias_filler {
       type: "constant"
-      value: 1
+      value: 0.1
     }
   }
 }
-#layer {
-#  name: "relu7"
-#  type: "ReLU"
-#  bottom: "fc7"
-#  top: "fc7"
-#}
+layer {
+  name: "relu7"
+  type: "ReLU"
+  bottom: "fc7"
+  top: "fc7"
+}
 layer {
   name: "drop7"
   type: "Dropout"
@@ -402,3 +333,4 @@ layer {
   bottom: "label"
   top: "loss"
 }
+
