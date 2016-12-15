@@ -23,7 +23,7 @@ device_id="${device_id:-0}"
 
 OMP_NUM_THREADS="${OMP_NUM_THREADS:-1}"
 #FLAG="${FLAG:-syntheticSgbenchmark2}" # start from 2 
-FLAG="${FLAG:-testcpu}" # start from 2 
+FLAG="${FLAG:-syntheticSgbenchmark2}" # start from 2 
 cpu_name="i7-3820"
 device_name="${device_name:-K80}"
 epoch_size=null

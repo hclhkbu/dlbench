@@ -1,6 +1,7 @@
 WorkDir=.
 ModelDir=$WorkDir$/Output/$ConfigName$
-DataDir=/home/comp/csshshi/data/cntk
+#DataDir=/home/comp/csshshi/data/cntk
+DataDir=/home/ipdps/data/cntk/synthetic
 
 ndlMacros=$WorkDir$/Macros.ndl
 

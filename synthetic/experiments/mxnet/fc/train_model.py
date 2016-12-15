@@ -3,10 +3,6 @@ import math
 import logging
 import os
 
-
-os.environ["MXNET_CUDNN_AUTOTUNE_DEFAULT"] = "1"
-
-
 def fit(args, network, data_loader, batch_end_callback=None):
     # kvstore
     kv = mx.kvstore.create(args.kv_store)
@@ -51,7 +47,8 @@ def fit(args, network, data_loader, batch_end_callback=None):
     (train, val) = data_loader(args, kv)
 
     # train
-    devs = mx.cpu() if args.gpus is None else [ mx.gpu(int(i)) for i in args.gpus.split(',')]
+    devs = mx.cpu() if args.gpus is None else [
+        mx.gpu(int(i)) for i in args.gpus.split(',')]
 
     epoch_size = args.num_examples / args.batch_size
 
@@ -83,15 +80,15 @@ def fit(args, network, data_loader, batch_end_callback=None):
         initializer        = mx.init.Normal(sigma=0.01),
         **model_args)
 
-    eval_metrics = ['accuracy', 'ce']
+    eval_metrics = ['ce']
 
     if batch_end_callback is not None:
         if not isinstance(batch_end_callback, list):
             batch_end_callback = [batch_end_callback]
     else:
         batch_end_callback = []
-    batch_end_callback.append(mx.callback.Speedometer(args.batch_size, int((args.num_examples/args.num_nodes)/args.batch_size)))
-    #batch_end_callback.append(mx.callback.Speedometer(args.batch_size, 1))
+    #batch_end_callback.append(mx.callback.Speedometer(args.batch_size, int((args.num_examples/args.num_nodes)/args.batch_size)))
+    batch_end_callback.append(mx.callback.Speedometer(args.batch_size, 1))
 
     model.fit(
         X                  = train,
