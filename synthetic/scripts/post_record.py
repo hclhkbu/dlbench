@@ -3,6 +3,8 @@
 import settings
 import argparse
 import time
+import requests
+import json
 
 from pymongo import MongoClient
 
@@ -21,7 +23,10 @@ def post_record(**args):
     create_time = int(time.time() * 1000)
     args['create_time'] = create_time
     print 'args: ', args
-    db['record'].insert(args)
+    data = json.dumps(args) 
+    ret = requests.post(settings.RESOURCE_URI, {'data': data})
+    print ret
+    #db['record'].insert(args)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Post experiments record tool')
