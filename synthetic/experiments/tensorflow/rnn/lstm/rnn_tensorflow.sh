@@ -15,7 +15,7 @@ benchmark_logfile=${network_type}-${network_name}-gpu${device_id}.bm
 echo -e 'GPU:'${device_id}'\nNetwork: '${network_name}'\nSeqlen: '${seqlen}'\nMinibatch: '${minibatch}'\nIterations: '${iterations}'\n_________________\n'>> ${benchmark_logfile}
 echo -e 'ToolName\t\t\tAverageTime(s)'>>${benchmark_logfile}
 tmplog=b${minibatch}-gpu${device_id}.log
-python /home/comp/csshshi/TensorFlow-Examples/rnn/ptb/ptb_word_lm.py --batchsize ${minibatch} --iters ${iterations} --seqlen ${seqlen} --numlayer ${numlayer} --hiddensize ${hiddensize} --device ${device_id} ${default} >& ${tmplog}
+python lstm.py --batchsize ${minibatch} --iters ${iterations} --seqlen ${seqlen} --numlayer ${numlayer} --hiddensize ${hiddensize} --device ${device_id} ${default} >& ${tmplog}
 total_time=`cat ${tmplog} | grep "Time for " | awk '{print $5}'`
 time_in_second=`awk "BEGIN {print ${total_time}/${iterations}}"`
 

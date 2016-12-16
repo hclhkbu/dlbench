@@ -16,11 +16,16 @@ parser.add_argument('-epochSize', type=str, help='number of training data per ep
 parser.add_argument('-numThreads', type=str, default='8', help='number of Threads, default=8')
 parser.add_argument('-hostFile', type=str, help='path to running hosts(config in host file) for multiple machine training.')
 parser.add_argument('-gpuCount', type=str, help='number of gpus in used')
+parser.add_argument('-cpuCount', type=str, default='1', help='number of cpus in used for cpu version')
 parser.add_argument('-lr', type=str, help='learning rate')
 parser.add_argument('-netType', type=str, help='network type')
 
 args = parser.parse_args()
 #print(args)
+
+# Set system variable
+os.environ['OMP_NUM_THREADS'] = args.cpuCount 
+os.environ['OPENBLAS_NUM_THREADS'] = args.cpuCount 
 
 # Build cmd
 cmd = "THC_CACHING_ALLOCATOR=1 th Main.lua "
@@ -37,8 +42,7 @@ elif "lstm" in network:
 		if "-" not in args.devId:
 			cmd = "THC_CACHING_ALLOCATOR=1 CUDA_VISIBLE_DEVICES=" + args.devId  + " th rnn/recurrent-language-model.lua --cuda " 
 		else:
-			print("Only GPU supproted!")
-			sys.exit(-2)
+			cmd = "th rnn/recurrent-language-model.lua --cuda --lstm --startlr 1 " 
 	else:
 		print("Device not set, please set device by adding -devId <-1 or 0,1,2,3>. See help for more")
 		sys.exit(-2)
@@ -93,8 +97,8 @@ if devId is not None:
         if nGPU > 1:
             cmd += " -nGPU " + str(nGPU)
         cmd = "CUDA_VISIBLE_DEVICES=" + devId + " " + cmd
-    elif "-1" == devId and network == "ffn":
-        cmd += "_cpu -nGPU 0 -type double -threads " + args.numThreads
+    elif "-1" == devId and (network == "ffn" or network=="fcn5"):
+        cmd += "_cpu -nGPU 0 -type float -threads " + args.numThreads
     else:
         print("Only CNN is not supported on CPU in torch")
         sys.exit(-2)
