@@ -18,9 +18,11 @@ parser.add_argument('-hostFile', type=str, help='path to running hosts(config in
 parser.add_argument('-gpuCount', type=str, help='number of gpus in used')
 parser.add_argument('-lr', type=str, help='learning rate')
 parser.add_argument('-netType', type=str, help='network type')
+parser.add_argument('-debug', type=bool, default=False, help='debug mode or benchmark mode')
 
 args = parser.parse_args()
-#print(args)
+if args.debug: print("==================Debug test " + args.network + "====================")
+if args.debug: print( "args: " + str(args))
 
 # Build cmd
 exePath = ""
@@ -82,13 +84,12 @@ logfile = args.log
 if ".log" not in logfile:
     logfile += ".log"
 
-#cmd += " &> " + logfile
 cmd += " >& " + logfile
 t = time.time()
-#print cmd
+if args.debug: print "cmd: " +  cmd
 os.system(cmd)
 t = time.time() - t
-#print("Time diff: " + str(t))
+if args.debug: print("Time diff: " + str(t))
 logPath = exePath + logfile
 catLog = "cat " + logPath
 with open(logPath, "a") as logFile:
@@ -97,22 +98,22 @@ with open(logPath, "a") as logFile:
 os.system("cp " + logPath + " ../../logs")
 totalEpochTime = subprocess.check_output( catLog + " | grep Time | cut -d\'=\' -f2 | paste -sd+ - | bc", shell=True)
 numEpoch = subprocess.check_output(catLog + " | grep Time | cut -d\'=\' -f2 | wc -l", shell=True)
-#print totalEpochTime
-#print numEpoch
+if args.debug: print "totalEpochTime: " + totalEpochTime
+if args.debug: print "numEpoch: " + numEpoch
 avgEpoch = 0
 if int(numEpoch) != 0:
     avgEpoch = float(totalEpochTime)/float(numEpoch)
-#print avgEpoch
+if args.debug: print "avgEpch: " + str(avgEpoch)
 if "lstm" in network:
     numSamples = int(subprocess.check_output(catLog + " | grep \"len of data train\" | cut -d' ' -f5", shell=True))
 avgBatch = (avgEpoch/int(numSamples))*float(batchSize)
-#print("Avg Batch: " + str(avgBatch))
+if args.debug: print("Avg Batch: " + str(avgBatch))
 
 if "lstm" not in network:
     valAccuracy = subprocess.check_output(catLog + "| grep Validation-a | cut -d'=' -f2", shell=True).strip().split('\n')
-    #print valAccuracy
+    if args.debug: print "valAccuracy: " + str(valAccuracy)
     trainCE = subprocess.check_output(catLog + "| grep Train-cross-entropy | cut -d'=' -f2", shell=True).strip().split('\n')
-    #print trainCE
+    if args.debug: print "trainCE: " + str(trainCE)
     
     info = ""
     for i in range(len(trainCE)/numNodes):
@@ -125,7 +126,7 @@ if "lstm" not in network:
             info += ","
         #info += str(i) + ":" + str(valAcu/numNodes) + ":" + str(train_ce/numNodes) 
         info += str(i) + ":" + "-" + ":" + str(train_ce/numNodes) 
-    #print info 
+    if args.debug: print "info: " + info 
     print "-t " + str(t) + " -a " + str(avgBatch) + " -I " + info
 else:
     valPerplexity = subprocess.check_output(catLog + " | grep Val | cut -d'=' -f2", shell=True).strip().split('\n')
@@ -135,6 +136,7 @@ else:
         if i != 0:
             info += ","
         info += str(i) + ":" + valPerplexity[i] + ":" + trainPerplexity[i]
-    #print info
+    if args.debug: print "info:" + info
     print "-t " + str(t) + " -a " + str(avgBatch) + info
 
+if args.debug: print("==================Debug test " + args.network + " End ====================")

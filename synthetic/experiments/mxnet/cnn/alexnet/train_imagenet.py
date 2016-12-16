@@ -1,23 +1,23 @@
-import sys
 import os
 os.environ["MXNET_CUDNN_AUTOTUNE_DEFAULT"] = "1"
+import sys
 import mxnet as mx
 import argparse
 import train_model
 
 
-parser = argparse.ArgumentParser(description='train an image classifer on cifar10')
-parser.add_argument('--data-dir', type=str, default= os.environ['HOME'] + '/data/mxnet/cifar10_32/',
+parser = argparse.ArgumentParser(description='train an image classifer on imagenet')
+parser.add_argument('--data-dir', type=str, default= os.environ['HOME'] + '/data/mxnet/imagenet/',
                     help='the input data directory')
 parser.add_argument('--num-nodes', type=int, default=1,
                     help='number of nodes')
 parser.add_argument('--gpus', type=str,
                     help='the gpus will be used, e.g "0,1,2,3"')
-parser.add_argument('--num-examples', type=int, default=50000,
+parser.add_argument('--num-examples', type=int, default=1281167,
                     help='the number of training examples')
 parser.add_argument('--batch-size', type=int, default=128,
                     help='the batch size')
-parser.add_argument('--lr', type=float, default=.05,
+parser.add_argument('--lr', type=float, default=.01,
                     help='the initial learning rate')
 parser.add_argument('--lr-factor', type=float, default=1,
                     help='times the lr with a factor for every lr-factor-epoch epoch')
@@ -38,18 +38,20 @@ args = parser.parse_args()
 # network
 # import alexnet_symbol as alexnet 
 import symbol_alexnet as alexnet
-net = alexnet.get_symbol(10)
+#import alexnet as alexnet
+net = alexnet.get_symbol(1000)
 #net = alexnet.get_net(10)
 
 # data
 def get_iterator(args, kv):
-    data_shape = (3, 32, 32)
+    data_shape = (3, 224, 224)
 
     train = mx.io.ImageRecordIter(
         path_imgrec = args.data_dir + "train.rec",
         mean_img    = args.data_dir + "mean.bin",
         data_shape  = data_shape,
         batch_size  = args.batch_size,
+	preprocess_threads = 20,
 	shuffle	    = True,
 	shuffle_chunk_size = 32,
 	shuffle_chunk_seed = 1234,
