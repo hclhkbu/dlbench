@@ -171,10 +171,12 @@ def inference(images):
 def train():
   global parameters
   config = tf.ConfigProto(allow_soft_placement=True, log_device_placement=FLAGS.log_device_placement)
+  device_str = get_device_str(FLAGS.device_id)
   if device_str.find('cpu') >= 0: # cpu version
       num_threads = os.getenv('OMP_NUM_THREADS', 1)
+      print 'num_threads: ', num_threads
       config = tf.ConfigProto(allow_soft_placement=True, intra_op_parallelism_threads=int(num_threads))
-  with tf.Graph().as_default(), tf.device(get_device_str(FLAGS.device_id)), tf.Session(config=config) as sess:
+  with tf.Graph().as_default(), tf.device(device_str), tf.Session(config=config) as sess:
       #image_size = 32 
       #images, labels = cifar10_input.distorted_inputs(FLAGS.data_dir, FLAGS.batch_size)
       images, labels = cifar10_input.inputs(False, FLAGS.data_dir, FLAGS.batch_size)
