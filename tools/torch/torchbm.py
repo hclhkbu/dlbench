@@ -98,7 +98,7 @@ if devId is not None:
             cmd += " -nGPU " + str(nGPU)
         cmd = "CUDA_VISIBLE_DEVICES=" + devId + " " + cmd
     elif "-1" == devId and (network == "ffn" or network=="fcn5"):
-        cmd += "_cpu -nGPU 0 -type float -threads " + args.numThreads
+        cmd += "_cpu -nGPU 0 -type float -threads " + args.cpuCount
     else:
         print("Only CNN is not supported on CPU in torch")
         sys.exit(-2)
