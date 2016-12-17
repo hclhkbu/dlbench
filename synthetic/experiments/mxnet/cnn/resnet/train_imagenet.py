@@ -48,10 +48,8 @@ import logging
 import numpy as np
 
 
-
-
 parser = argparse.ArgumentParser(description='train an image classifer on cifar10')
-parser.add_argument('--data-dir', type=str, default= os.environ['HOME'] + '/data/mxnet/cifar10_32/',
+parser.add_argument('--data-dir', type=str, default= os.environ['HOME'] + '/data/mxnet/imagenet/',
                     help='the input data directory')
 parser.add_argument('--num-nodes', type=int, default=1,
                     help='number of nodes')
@@ -59,9 +57,9 @@ parser.add_argument('--optimizer', type=str, default="ccSGD",
 		    help='Optimizer options: Nesterov | SGD | NAG ... see http://mxnet.io/api/python/model.html')
 parser.add_argument('--gpus', type=str,
                     help='the gpus will be used, e.g "0,1,2,3"')
-parser.add_argument('--num-examples', type=int, default=50000,
+parser.add_argument('--num-examples', type=int, default=1281167,
                     help='the number of training examples')
-parser.add_argument('--batch-size', type=int, default=128,
+parser.add_argument('--batch-size', type=int, default=32,
                     help='the batch size')
 parser.add_argument('--lr', type=float, default=0.1,
                     help='the initial learning rate')
@@ -69,7 +67,7 @@ parser.add_argument('--model-prefix', type=str,
                     help='the prefix of the model to load')
 parser.add_argument('--save-model-prefix', type=str,
                     help='the prefix of the model to save')
-parser.add_argument('--num-epochs', type=int, default=200,
+parser.add_argument('--num-epochs', type=int, default=4,
                     help='the number of training epochs')
 parser.add_argument('--load-epoch', type=int,
                     help='load the model on an epoch using the model-prefix')
@@ -80,13 +78,13 @@ args = parser.parse_args()
 
 # network
 from symbol_resnet import get_symbol
-net = get_symbol(num_class=10)
+net = get_symbol(num_classes=1000, num_layers=50, image_shape='3, 224, 224', conv_workspace=512)
 
 
 # data
 def get_iterator(args, kv):
     kargs = dict(
-        data_shape=(3, 32, 32),
+        data_shape=(3, 224, 224),
         # Use mean and scale works equally well
         # We use BatchNorm after data for simplicity
         # mean_r=127,
@@ -98,13 +96,12 @@ def get_iterator(args, kv):
     train = mx.io.ImageRecordIter(
         path_imgrec=args.data_dir + 'train.rec',
         batch_size=args.batch_size,
+	preprocess_threads=16,
         rand_mirror=False,
 	shuffle = True,
 	shuffle_chunk_size = 32,
         num_parts=kv.num_workers,
         part_index=kv.rank,
-        # Because we use z-score normalization (implemented as a BatchNorm)
-        fill_value=127,
         **kargs
     )
 #    val = mx.io.ImageRecordIter(
@@ -249,18 +246,17 @@ def fit(args, network, data_loader, batch_end_callback=None):
         wd=0.0001,
 	optimizer=args.optimizer,
 	epoch_size = epoch_size,
-        #optimizer='Nesterov',
         # Note we initialize BatchNorm beta and gamma as that in
         # https://github.com/facebook/fb.resnet.torch/
         # i.e. constant 0 and 1, rather than
         # https://github.com/gcr/torch-residual-networks/blob/master/residual-layers.lua
         # FC layer is initialized as that in torch default
         # https://github.com/torch/nn/blob/master/Linear.lua
-        initializer=mx.init.Mixed(
-            ['.*fc.*', '.*'],
-            [mx.init.Xavier(rnd_type='uniform', factor_type='in', magnitude=1),
-             Init(rnd_type='gaussian', factor_type='in', magnitude=1)]
-        ),
+    #    initializer=mx.init.Mixed(
+    #        ['.*fc.*', '.*'],
+    #        [mx.init.Xavier(rnd_type='uniform', factor_type='in', magnitude=1),
+    #         Init(rnd_type='gaussian', factor_type='in', magnitude=1)]
+    #    ),
         #lr_scheduler=Scheduler(epoch_step=[80, 160], factor=0.1, epoch_size=epoch_size),
         **model_args)
 
@@ -271,8 +267,8 @@ def fit(args, network, data_loader, batch_end_callback=None):
             batch_end_callback = [batch_end_callback]
     else:
         batch_end_callback = []
-    batch_end_callback.append(mx.callback.Speedometer(args.batch_size, int((args.num_examples/args.num_nodes)/args.batch_size)))
-    #batch_end_callback.append(mx.callback.Speedometer(args.batch_size, 1))
+    #batch_end_callback.append(mx.callback.Speedometer(args.batch_size, int((args.num_examples/args.num_nodes)/args.batch_size)))
+    batch_end_callback.append(mx.callback.Speedometer(args.batch_size, 1))
 
     model.fit(
         X=train,
