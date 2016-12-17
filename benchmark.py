@@ -20,7 +20,7 @@ device_name = ''
 cuda_driver = ''
 cudnn = ''
 cuda = ''
-cpu_count = ''
+cpu_count = '1'
 if args.config is not None:
 	with open(args.config) as f:
 		content = f.readlines()
@@ -59,7 +59,7 @@ if args.config is not None:
 else:
 	print("Please add -config <path to your config file>")
 
-post_flags = " -f " + flag + " -d " + device_name + " -c 1" + " -P " + cpu_name + " -A unknown" + " -r " + cuda_driver + " -C " + cuda + " -D " + cudnn
+post_flags = " -f " + flag + " -d " + device_name + " -c " + cpu_count + " -P " + cpu_name + " -A unknown" + " -r " + cuda_driver + " -C " + cuda + " -D " + cudnn
 #print post_flags
 #print tools
 #print experiments

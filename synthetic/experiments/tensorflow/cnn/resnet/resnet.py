@@ -310,7 +310,6 @@ def _get_variable(name,
                            collections=collections,
                            trainable=trainable)
 
-
 def conv(x, c):
     ksize = c['ksize']
     stride = c['stride']
