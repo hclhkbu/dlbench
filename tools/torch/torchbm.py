@@ -24,8 +24,8 @@ args = parser.parse_args()
 #print(args)
 
 # Set system variable
-os.environ['OMP_NUM_THREADS'] = args.cpuCount 
-os.environ['OPENBLAS_NUM_THREADS'] = args.cpuCount 
+#os.environ['OMP_NUM_THREADS'] = args.cpuCount 
+#os.environ['OPENBLAS_NUM_THREADS'] = args.cpuCount 
 
 # Build cmd
 cmd = "THC_CACHING_ALLOCATOR=1 th Main.lua "
@@ -42,7 +42,7 @@ elif "lstm" in network:
 		if "-" not in args.devId:
 			cmd = "THC_CACHING_ALLOCATOR=1 CUDA_VISIBLE_DEVICES=" + args.devId  + " th rnn/recurrent-language-model.lua --cuda " 
 		else:
-			cmd = "th rnn/recurrent-language-model.lua --cuda --lstm --startlr 1 " 
+			cmd = "OMP_NUM_THREADS=%s OPENBLAS_NUM_THREADS=%s th rnn/recurrent-language-model.lua --lstm --startlr 1 " % (args.cpuCount, args.cpuCount)
 	else:
 		print("Device not set, please set device by adding -devId <-1 or 0,1,2,3>. See help for more")
 		sys.exit(-2)
@@ -56,7 +56,7 @@ elif "lstm" in network:
 	if ".log" not in logfile:
 		logfile += ".log"
 	cmd += " >& " + logfile
-	#print cmd
+	print cmd
 	t = time.time()
 	os.system(cmd)
 	t = time.time() - t
