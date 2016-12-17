@@ -1,4 +1,2 @@
-logprefix='sgbenchmark6'
-host=`hostname`
-nohup python benchmark.py -config configs/$host-caffe.config >& $logprefix\caffe.log &
-nohup python benchmark.py -config configs/$host-mxnet.config >& $logprefix\mxnet.log &
+python benchmark.py -config configs/synbm2cpu1.config 
+python benchmark.py -config configs/synbm2cpu8.config 

@@ -35,8 +35,8 @@ running_time=`date +"%Y%m%d-%H:%M:%S"`
 hostName=`hostname`
 
 #tools=( "caffe" "cntk" "dsstne" "tensorflow" "torch" )
-tools=( "caffe" "cntk" "tensorflow" "torch" ) #cpu versions, exclude dsstne
-#tools=( "caffe" )
+#tools=( "caffe" "cntk" "tensorflow" "torch" ) #cpu versions, exclude dsstne
+tools=( "tensorflow" "torch" )
 benchmark_logfile=${current_path}/${network_type}-${network_name}-gpu${device_id}.bm
 echo -e 'GPU:'${device_id}'\nNUM_THREADS (for CPU): '${OMP_NUM_THREADS}'\nNetwork: '${network_name}'\nEpochs: '${epochs}'\nMinibatch: '${minibatch}'\nIterations: '${iterations}'\nBenchmark Time: '${running_time}'\n_________________\n'>> ${benchmark_logfile}
 echo -e 'ToolName\t\t\tAverageTime(s)'>>${benchmark_logfile}
@@ -165,6 +165,7 @@ do
         elif [ ${tool} = "tensorflow" ]
         then
             source ~/tf11/bin/activate
+            #. ../export-local-var.sh
             python ${network_name}bm.py -e ${epochs} -b ${minibatch} -i ${iterations} -d ${device_id} >& ${tmplog}
             time_in_second=`cat ${tmplog} | tail -n1 | awk '{print $8}'`
             deactivate

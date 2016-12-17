@@ -17,10 +17,14 @@ parser.add_argument('-numThreads', type=str, default='8', help='number of Thread
 parser.add_argument('-hostFile', type=str, help='path to running hosts(config in host file) for multiple machine training.')
 parser.add_argument('-gpuCount', type=str, help='number of gpus in used')
 parser.add_argument('-lr', type=str, help='learning rate')
+parser.add_argument('-cpuCount', type=str, default='1', help='number of cpus in used for cpu version')
 parser.add_argument('-netType', type=str, help='network type')
 args = parser.parse_args()
 #print(args)
 
+# Set system variable
+os.environ['OMP_NUM_THREADS'] = args.cpuCount 
+os.environ['OPENBLAS_NUM_THREADS'] = args.cpuCount 
 
 # Build cmd for benchmark
 root_path = os.path.dirname(os.path.abspath(__file__))

@@ -36,7 +36,7 @@ hostName=`hostname`
 
 
 #tools=( "caffe" "cntk" "tensorflow" "torch" )
-tools=( "torch" )
+tools=( "cntk" "torch" )
 benchmark_logfile=${current_path}/${network_type}-${network_name}-gpu${device_id}.bm
 echo -e 'GPU:'${device_id}'\nNUM_THREADS (for CPU): '${OMP_NUM_THREADS}'\nNetwork: '${network_name}'\nEpochs: '${epochs}'\nMinibatch: '${minibatch}'\nIterations: '${iterations}'\nBenchmark Time: '${running_time}'\n_________________\n'>> ${benchmark_logfile}
 echo -e 'ToolName\t\t\tAverageTime(s)'>>${benchmark_logfile}
@@ -181,7 +181,7 @@ do
             deactivate
         elif [ ${tool} = "torch" ]
         then
-            . /usr/local/torch/bin/torch-activate
+            #. /usr/local/torch/bin/torch-activate
             th ${network_name}bm.lua -depth 50 -nGPU 1 -nThreads 2 -deviceId ${device_id} -batchSize ${minibatch} -shareGradInput true -nEpochs ${epochs} -nIterations ${iterations} -dataset imagenet -data ~/data/ >& ${tmplog}
             tmp_total_time=0.0
             lineno=0

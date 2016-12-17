@@ -60,6 +60,8 @@ def train(model='fcn5'):
         device_str = '/gpu:%d'%int(device_id)
     else:
         device_str = '/cpu:0'
+        num_threads = os.getenv('OMP_NUM_THREADS', 1)
+        config = tf.ConfigProto(allow_soft_placement=True, intra_op_parallelism_threads=int(num_threads))
 
 
     with tf.Graph().as_default(), tf.device(device_str), tf.Session(config=config) as sess:
