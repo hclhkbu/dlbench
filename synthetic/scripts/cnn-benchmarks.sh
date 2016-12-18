@@ -205,7 +205,7 @@ do
         then
             tool_path=${experiments_path}/${tool}
             cd $tool_path
-            python mxnetbm.py -network ${network_name} -devId 0 -netType ${network_type} -epochSize 10240 -numEpochs ${epochs} -log $tmplog 
+            python mxnetbm.py -batchSize ${minibatch} -network ${network_name} -devId 0 -netType ${network_type} -epochSize 10240 -numEpochs ${epochs} -log $tmplog 
             cd ${network_type}
             if [ ${network_type} = 'cnn' ]
             then
