@@ -36,7 +36,7 @@ hostName=`hostname`
 
 #tools=( "caffe" "cntk" "dsstne" "tensorflow" "torch" )
 #tools=( "caffe" "cntk" "tensorflow" "torch" ) #cpu versions, exclude dsstne
-tools=( "tensorflow" "torch" )
+tools=( "mxnet" )
 benchmark_logfile=${current_path}/${network_type}-${network_name}-gpu${device_id}.bm
 echo -e 'GPU:'${device_id}'\nNUM_THREADS (for CPU): '${OMP_NUM_THREADS}'\nNetwork: '${network_name}'\nEpochs: '${epochs}'\nMinibatch: '${minibatch}'\nIterations: '${iterations}'\nBenchmark Time: '${running_time}'\n_________________\n'>> ${benchmark_logfile}
 echo -e 'ToolName\t\t\tAverageTime(s)'>>${benchmark_logfile}
@@ -202,6 +202,17 @@ do
             tmp_total_time=`cat ${tmplog} | grep "Total Training Time " | awk '{print substr ($4,1,7)}'`
             iter_each_epoch=`awk "BEGIN {print (138493+${minibatch}-1)/${minibatch}}"`
             time_in_second=`awk "BEGIN {print ${tmp_total_time}/(${iter_each_epoch}*${epochs})}"`
+        elif [ ${tool} = "mxnet" ]
+        then
+            tool_path=${experiments_path}/${tool}
+            cd $tool_path
+            python mxnetbm.py -network ${network_name} -devId 0 -netType ${network_type} -epochSize 10240 -numEpochs ${epochs} -log $tmplog 
+            cd ${network_type}
+            if [ ${network_type} = 'cnn' ]
+            then
+                cd ${network_name}
+            fi
+            time_in_second=`cat ${tmplog} | grep "AverageBatch" | awk '{print $2}'`
         fi 
         echo "train step"${step}": "${time_in_second} >> ${tmpresultlog}
         total_time=`awk "BEGIN {print ${total_time}+${time_in_second}}"`

@@ -53,5 +53,6 @@ if __name__ == '__main__':
                 gpu_count=p.gpu_count, cpu_count=p.cpu_count, cpu_name=p.cpu_name, epoch_size=p.epoch_size, epoch=p.epoch,
                 total_time=p.total_time, average_time=p.average_time, tool_name=p.tool_name, avg_mem=p.average_mem, 
                 epoch_info=p.epoch_info, log_file=p.log_file, cuda=p.cuda, cudnn=p.cudnn, cuda_driver=p.cuda_driver)
+    #object_id = post_record(flag='test', network='network')
     print 'post finished, object_id: ', object_id
 

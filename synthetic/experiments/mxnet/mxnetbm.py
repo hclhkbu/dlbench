@@ -36,7 +36,10 @@ network = args.network
 numSamples = args.epochSize
 logFile = ""
 if args.netType == 'fc':
-    	pyscript = "python train_fake_data.py --network " + args.network
+    	tmpnetwork = 'fcn5'
+        if args.network == 'ffn26752l6':
+            tmpnetwork = 'fcn8'
+    	pyscript = "python train_fake_data.py --network " + tmpnetwork
 elif args.netType == 'cnn':
 	pyscript = "python train_imagenet.py"
 else:
@@ -66,7 +69,9 @@ totalSpeed = 0
 for s in samplePerSec:
 	totalSpeed += float(s)
 avgBatch = float(args.batchSize)/(totalSpeed/len(samplePerSec))
-if args.debug: print "Average batch: " + str(avgBatch)
+#if args.debug: print "Average batch: " + str(avgBatch)
+#print "Average batch: " + str(avgBatch)
 with open(logFile, "a") as l:
 	l.write("Total time: " + str(t) + "\n")
 	l.write("cmd: " + cmd + "\n")
+	l.write("AverageBatch " + str(avgBatch) + "\n")
