@@ -74,8 +74,9 @@ if devId is not None:
 	if "--kv-store" not in cmd:
             cmd += " --kv-store device"
     elif "-1" == devId:
-        os.environ["MXNET_CPU_WORKER_NTHREADS"] = args.numThreads
-        print os.environ["MXNET_CPU_WORKER_NTHREADS"]
+        pass
+        #os.environ["MXNET_CPU_WORKER_NTHREADS"] = args.numThreads
+        #print os.environ["MXNET_CPU_WORKER_NTHREADS"]
     else:
         print("invalid devId!")
         sys.exit(-1)

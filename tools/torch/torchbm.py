@@ -56,7 +56,7 @@ elif "lstm" in network:
 	if ".log" not in logfile:
 		logfile += ".log"
 	cmd += " >& " + logfile
-	print cmd
+	#print cmd
 	t = time.time()
 	os.system(cmd)
 	t = time.time() - t
