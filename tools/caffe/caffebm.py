@@ -39,7 +39,10 @@ log_file = args.log
 if ".log" not in log_file:
 	log_file += ".log"
 log_path = os.getcwd() + "/" + log_file
-cmd = 'caffe train -solver=' + args.network + '-b' + args.batchSize + '-GPU-solver' + args.gpuCount + ".prototxt -gpu=" + args.devId
+if args.devId == '-1':
+    cmd = 'OMP_NUM_THREADS=' + args.cpuCount + ' OPENBLAS_NUM_THREADS='+args.cpuCount + ' caffe train -solver=' + args.network + '-b' + args.batchSize + '-CPU-solver.prototxt'
+else:
+    cmd = 'caffe train -solver=' + args.network + '-b' + args.batchSize + '-GPU-solver' + args.gpuCount + ".prototxt -gpu=" + args.devId
 cmd += ' >& ' + log_path
 
 ## Execute cmd 
