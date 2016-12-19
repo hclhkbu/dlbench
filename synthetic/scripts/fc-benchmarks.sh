@@ -207,11 +207,10 @@ do
             tool_path=${experiments_path}/${tool}
             cd $tool_path
             epoch_size=`awk "BEGIN {print ${minibatch}*${iterations}}"`
-            if [ ${device_id} = -1 ]
+            if [ ${device_id} -eq -1 ]
             then
                 python mxnetbm.py -batchSize ${minibatch} -numThreads ${OMP_NUM_THREADS} -network ${network_name} -devId ${device_id} -netType ${network_type} -epochSize $epoch_size -numEpochs ${epochs} -log $tmplog 
-            elif
-            then
+            else
                 python mxnetbm.py -batchSize ${minibatch} -network ${network_name} -devId ${device_id} -netType ${network_type} -epochSize $epoch_size -numEpochs ${epochs} -log $tmplog 
             fi
             cd ${network_type}
