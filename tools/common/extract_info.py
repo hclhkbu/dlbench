@@ -68,7 +68,7 @@ def extract_info_caffe(filename):
             elif not is_cpu:
                 is_fist = False
             #interval = 0
-    print average_times
+    #print average_times
     average_time = np.average(average_times)
     try:
         total_time = _time_delta_in_second(content[0].split()[1], content[-1].split()[1])
