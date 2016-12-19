@@ -6,8 +6,11 @@ import subprocess
 # Parse arguments
 parser = argparse.ArgumentParser(description='Benchmark deep learning tools')
 parser.add_argument('-config', type=str, help='Path to the config file')
+parser.add_argument('-debug', type=bool, default=False, help='Debug benchmark.py')
 
 args = parser.parse_args()
+
+if args.debug: print "[DEBUG] args:" + str(args)
 
 # Parse config file
 config_experiments = False
@@ -58,11 +61,14 @@ if args.config is not None:
 				experiments += line + ':'
 else:
 	print("Please add -config <path to your config file>")
+	sys.exit(0)
 
 post_flags = " -f " + flag + " -d " + device_name + " -c " + cpu_count + " -P " + cpu_name + " -A unknown" + " -r " + cuda_driver + " -C " + cuda + " -D " + cudnn
-#print post_flags
-#print tools
-#print experiments
+
+if args.debug:
+	print "[DEBUG] Defalut post flags:" + post_flags
+	print "[DEBUG] Tool(s):" + tools
+	print "[DEBUG] Experiments:" + experiments
 
 # Benchmark each tool
 root_path = os.path.dirname(os.path.abspath(__file__))
@@ -71,8 +77,11 @@ if os.path.exists(root_path + "/logs/") is not True:
 	os.system("rm -rf logs")
 	print "Creating log directory... " + root_path + "/logs/"
 	os.system("mkdir logs")
-#print host_name
-#print root_path
+
+if args.debug:
+	print "[DEBUG] Benchmark running on: " + host_name
+	print "[DEBUG] Root path:" + root_path
+
 for tool in tools:
 	work_dir = root_path + "/tools/" + tool
 	for experiment in experiments:
@@ -103,9 +112,4 @@ for tool in tools:
 		post_flags = " -f " + flag + " -d " + device_name + " -c " + cpu_count + " -P " + cpu_name + " -A unknown" + " -r " + cuda_driver + " -C " + cuda + " -D " + cudnn
 		post_script = ''
 		print "Done!"
-
-
-
-
-
 
