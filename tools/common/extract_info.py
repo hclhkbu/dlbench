@@ -36,17 +36,20 @@ def extract_info_caffe(filename):
     useful_lines = []
     accuracies = []
     is_fist = True
+    is_cpu = False
     interval = 0
     average_times = [] 
     for index, line in enumerate(content):
+        if line.find('Use CPU') > 0:
+            is_cpu = True
         if line.find('solver.cpp:228') > 0:
             #interval += 1
             #if interval == 3 or is_fist:
             useful_lines.append(line)
             #interval = 0
             #is_fist = False
-        if line.find('solver.cpp:404]     Test net output #1:') > 0:
-            if not is_fist:
+        if line.find('solver.cpp:404]     Test net output #1:') > 0 or (is_cpu and line.find('Snapshotting to binary proto file ') > 0):
+            if (not is_fist) or is_cpu:
                 iteration = content[index-3].split()[5].strip(',') 
                 accuracy = content[index-1].split()[-1]
                 #loss = content[index].split()[10]
@@ -62,11 +65,15 @@ def extract_info_caffe(filename):
                     average_times.append(average_time)
                 accuracies.append((iteration, accuracy, loss))
                 useful_lines = []
-            else:
+            elif not is_cpu:
                 is_fist = False
             #interval = 0
+    print average_times
     average_time = np.average(average_times)
-    total_time = _time_delta_in_second(content[0].split()[1], content[-1].split()[1])
+    try:
+        total_time = _time_delta_in_second(content[0].split()[1], content[-1].split()[1])
+    except:
+        total_time = _time_delta_in_second(content[0].split()[1], content[-3].split()[1])
     seq_str = accuracies
     seq_str = ','.join(['%s:%s:%s'%item for item in accuracies]) 
     #print seq_str
