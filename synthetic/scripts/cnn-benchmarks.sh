@@ -206,7 +206,7 @@ do
             tool_path=${experiments_path}/${tool}
             cd $tool_path
             epoch_size=`awk "BEGIN {print ${minibatch}*${iterations}}"`
-            python mxnetbm.py -batchSize ${minibatch} -network ${network_name} -devId ${epoch_size} -netType ${network_type} -epochSize $epoch_size -numEpochs ${epochs} -log $tmplog 
+            python mxnetbm.py -batchSize ${minibatch} -network ${network_name} -devId ${device_id} -netType ${network_type} -epochSize $epoch_size -numEpochs ${epochs} -log $tmplog 
             cd ${network_type}
             if [ ${network_type} = 'cnn' ]
             then
