@@ -78,9 +78,7 @@ if __name__ == '__main__':
     data_train = MyBucketSentenceIter(os.path.join(data_dir, 'ptb.train.txt'),
                                     vocab, buckets, batch_size, init_states,
                                     time_major=True)
-    data_val = MyBucketSentenceIter(os.path.join(data_dir, 'ptb.valid.txt'),
-                                  vocab, buckets, batch_size, init_states,
-                                  time_major=True)
+    #data_val = MyBucketSentenceIter(os.path.join(data_dir, 'ptb.valid.txt'), vocab, buckets, batch_size, init_states, time_major=True)
     sample_size = 0
     for x in data_train.data:
         sample_size += len(x)
@@ -152,11 +150,14 @@ if __name__ == '__main__':
     head = '%(asctime)-15s %(message)s'
     logging.basicConfig(level=logging.DEBUG, format=head)
 
-    mod.fit(data_train, eval_data=data_val, num_epoch=num_epoch,
-            eval_metric=mx.metric.np(Perplexity),
-            #batch_end_callback=mx.callback.Speedometer(batch_size, int((sample_size-1)/batch_size)),
-            batch_end_callback=mx.callback.Speedometer(batch_size, 1),
-            #initializer=mx.init.Xavier(factor_type="in", magnitude=2.34),
-            initializer=mx.init.Uniform(scale=0.1),
-            optimizer='sgd',
-	    optimizer_params={'learning_rate': learning_rate, 'momentum': momentum, 'wd': 0.00001, 'clip_gradient': 5.0})
+    mod.fit(
+		    data_train,
+#		    eval_data=data_val, 
+		    num_epoch=num_epoch,
+		    eval_metric=mx.metric.np(Perplexity),
+		    #batch_end_callback=mx.callback.Speedometer(batch_size, int((sample_size-1)/batch_size)),
+		    batch_end_callback=mx.callback.Speedometer(batch_size, 1),
+		    #initializer=mx.init.Xavier(factor_type="in", magnitude=2.34),
+		    initializer=mx.init.Uniform(scale=0.1),
+		    optimizer='sgd',
+		    optimizer_params={'learning_rate': learning_rate, 'momentum': momentum, 'wd': 0.00001, 'clip_gradient': 5.0})
