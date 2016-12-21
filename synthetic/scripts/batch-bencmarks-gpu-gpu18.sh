@@ -8,9 +8,9 @@
 #minibatch=128   iterations=8    epochs=4    device_id=0     network_name=alexnet    ./cnn-benchmarks.sh
 
 # GPU-0 RetNet 
-minibatch=8     iterations=8    epochs=4    device_id=0     network_name=resnet     ./cnn-benchmarks.sh
-minibatch=16    iterations=8    epochs=4    device_id=0     network_name=resnet     ./cnn-benchmarks.sh
-minibatch=32    iterations=8    epochs=4    device_id=0     network_name=resnet     ./cnn-benchmarks.sh
+#minibatch=8     iterations=8    epochs=4    device_id=0     network_name=resnet     ./cnn-benchmarks.sh
+#minibatch=16    iterations=8    epochs=4    device_id=0     network_name=resnet     ./cnn-benchmarks.sh
+#minibatch=32    iterations=8    epochs=4    device_id=0     network_name=resnet     ./cnn-benchmarks.sh
 minibatch=64    iterations=8    epochs=4    device_id=0     network_name=resnet     ./cnn-benchmarks.sh
 
 
