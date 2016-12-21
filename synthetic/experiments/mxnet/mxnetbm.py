@@ -74,8 +74,7 @@ totalSpeed = 0
 for s in samplePerSec:
 	totalSpeed += float(s)
 avgBatch = float(args.batchSize)/(totalSpeed/len(samplePerSec))
-#if args.debug: print "Average batch: " + str(avgBatch)
-#print "Average batch: " + str(avgBatch)
+if args.debug: print "Average batch: " + str(avgBatch)
 with open(logFile, "a") as l:
 	l.write("Total time: " + str(t) + "\n")
 	l.write("cmd: " + cmd + "\n")
