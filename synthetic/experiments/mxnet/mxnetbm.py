@@ -56,7 +56,7 @@ elif args.devId == "-1":
 	pyscript = "export OMP_NUM_THREADS=" + args.numThreads + "; export OPENBLAS_NUM_THREADS=" + args.numThreads + "; export MXNET_CPU_WORKER_NTHREADS=" + args.numThreads + ";" + pyscript
 else:
 	pyscript += " --gpus " + args.devId
-	if len(args.gpus.split(',')) > 1: pyscript += " --kv-store device "
+	#if len(args.gpus.split(',')) > 1: pyscript += " --kv-store device "
 
 cmd += pyscript + " --num-epochs " + args.numEpochs + " --batch-size " + args.batchSize + " --num-examples " + numSamples
 if ".log" not in args.log:

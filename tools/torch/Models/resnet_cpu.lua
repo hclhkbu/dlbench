@@ -18,11 +18,8 @@ misrepresented as being the original software.
 3. This notice may not be removed or altered from any source distribution.
 --]]
 
-require './residual-layers'
+require './residual-layers-cpu'
 require 'nn'
-require 'cutorch'
-require 'cunn'
-require 'cudnn'
 require 'nngraph'
 local nninit = require 'nninit'
 
@@ -32,11 +29,11 @@ local nninit = require 'nninit'
 local N = 9 --opt.Nsize
 input = nn.Identity()()
 ------> 3, 32,32
-model = cudnn.SpatialConvolution(3, 16, 3,3, 1,1, 1,1)
+model = nn.SpatialConvolution(3, 16, 3,3, 1,1, 1,1)
 :init('weight', nninit.kaiming, {gain = 'relu'})
 :init('bias', nninit.constant, 0)(input)
-model = cudnn.SpatialBatchNormalization(16)(model)
-model = cudnn.ReLU(true)(model)
+model = nn.SpatialBatchNormalization(16)(model)
+model = nn.ReLU(true)(model)
 ------> 16, 32,32   First Group
 for i=1,N do   model = addResidualLayer2(model, 16)   end
 ------> 32, 16,16   Second Group
@@ -52,7 +49,6 @@ model = nn.Linear(64, 10)(model)
 model = nn.LogSoftMax()(model)
 
 model = nn.gModule({input}, {model})
-model:cuda()
 print(model)
 --print(#model:forward(torch.randn(512, 3, 32,32):cuda()))
 return model

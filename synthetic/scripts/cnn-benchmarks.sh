@@ -34,7 +34,7 @@ hostName=`hostname`
 
 
 #tools=( "caffe" "cntk" "tensorflow" "torch" )
-tools=( "mxnet" )
+tools=( "caffe" )
 benchmark_logfile=${current_path}/${network_type}-${network_name}-gpu${device_id}.bm
 echo -e 'GPU:'${device_id}'\nNUM_THREADS (for CPU): '${OMP_NUM_THREADS}'\nNetwork: '${network_name}'\nEpochs: '${epochs}'\nMinibatch: '${minibatch}'\nIterations: '${iterations}'\nBenchmark Time: '${running_time}'\n_________________\n'>> ${benchmark_logfile}
 echo -e 'ToolName\t\t\tAverageTime(s)'>>${benchmark_logfile}
@@ -205,7 +205,13 @@ do
         then
             tool_path=${experiments_path}/${tool}
             cd $tool_path
-            python mxnetbm.py -batchSize ${minibatch} -network ${network_name} -devId 0 -netType ${network_type} -epochSize 10240 -numEpochs ${epochs} -log $tmplog 
+            epoch_size=`awk "BEGIN {print ${minibatch}*${iterations}}"`
+            if [ ${device_id} = -1 ]
+            then
+                python mxnetbm.py -batchSize ${minibatch} -numThreads ${OMP_NUM_THREADS} -network ${network_name} -devId ${device_id} -netType ${network_type} -epochSize $epoch_size -numEpochs ${epochs} -log $tmplog 
+            else
+                python mxnetbm.py -batchSize ${minibatch} -network ${network_name} -devId ${device_id} -netType ${network_type} -epochSize $epoch_size -numEpochs ${epochs} -log $tmplog 
+            fi
             cd ${network_type}
             if [ ${network_type} = 'cnn' ]
             then

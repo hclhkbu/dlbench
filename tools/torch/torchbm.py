@@ -5,9 +5,9 @@ import subprocess
 
 # Parse arguments
 current_time = time.ctime()
-parser = argparse.ArgumentParser(description='Python script benchmarking mxnet')
-parser.add_argument('-log', type=str, default=('mxnet_' + current_time + '.log').replace(" ", "_"),
-        help='Name of log file, default= mxnet_ + current time + .log') 
+parser = argparse.ArgumentParser(description='Python script benchmarking torch')
+parser.add_argument('-log', type=str, default=('torch_' + current_time + '.log').replace(" ", "_"),
+        help='Name of log file, default= torch_ + current time + .log') 
 parser.add_argument('-batchSize', type=str, default='64', help='Batch size in each GPU, default = 64')
 parser.add_argument('-network', type=str, default='fcn5', help='name of network[fcn5 | alexnet | resnet | lstm32 | lstm64]')
 parser.add_argument('-devId', type=str, help='CPU: -1, GPU: 0,1,2,3 (Multiple gpu supported)')
@@ -36,7 +36,10 @@ if network == "fcn5":
     cmd += "-LR " + args.lr +" -dataset MNIST -network ffn5"
     numSamples = args.epochSize
 elif network == "alexnet" or network == "resnet":
-    cmd += "-network " + network + " -LR " + args.lr + " "
+    if args.devId == '-1':
+        cmd += " -LR " + args.lr + " -network " + network 
+    else:
+        cmd += "-network " + network + " -LR " + args.lr + " "
     numSamples = args.epochSize
 elif "lstm" in network:
 	if args.devId is not None:
@@ -98,7 +101,8 @@ if devId is not None:
         if nGPU > 1:
             cmd += " -nGPU " + str(nGPU)
         cmd = "CUDA_VISIBLE_DEVICES=" + devId + " " + cmd
-    elif "-1" == devId and (network == "ffn" or network=="fcn5"):
+    #elif "-1" == devId and (network == "ffn" or network=="fcn5"):
+    elif "-1" == devId:
         cmd += "_cpu -nGPU 0 -type float -threads " + args.cpuCount
     else:
         print("Only CNN is not supported on CPU in torch")
@@ -107,7 +111,10 @@ else:
     print("Device not set, please set device by adding -devId <-1 or 0,1,2,3>. See help for more")
     sys.exit(-2)
 
-batchSize = int(args.batchSize)*nGPU
+if args.devId == '-1':
+    batchSize = args.batchSize
+else:
+    batchSize = int(args.batchSize)*nGPU
 numEpochs = args.numEpochs
 cmd += " -batchSize " + str(batchSize) + " -epoch " + numEpochs
 

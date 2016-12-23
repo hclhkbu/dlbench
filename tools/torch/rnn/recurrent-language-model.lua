@@ -190,6 +190,7 @@ while opt.maxepoch <= 0 or epoch <= opt.maxepoch do
    local a = torch.Timer()
    lm:training()
    local sumErr = 0
+   local numIter = 0
    for i, inputs, targets in trainset:subiter(opt.batchsize, opt.trainsize) do
       targets = targetmodule:forward(targets)
       
@@ -219,8 +220,10 @@ while opt.maxepoch <= 0 or epoch <= opt.maxepoch do
       if i % 1000 == 0 then
          collectgarbage()
       end
+      numIter = numIter + 1
 
    end
+   print('Time elapsed for '.. numIter  .. ' iters: ' .. a:time().real .. ' seconds')
    
    -- learning rate decay
    if opt.schedule then
@@ -239,6 +242,7 @@ while opt.maxepoch <= 0 or epoch <= opt.maxepoch do
 
    if cutorch then cutorch.synchronize() end
    local speed = a:time().real/opt.trainsize
+   -- print(numIter)
    print(string.format("Speed : %f :ms/batch , train size: %f", speed*opt.batchsize*1000, opt.trainsize))
    print('Epochi '.. epoch ..' time: ' .. a:time().real .. ' :seconds')
 
