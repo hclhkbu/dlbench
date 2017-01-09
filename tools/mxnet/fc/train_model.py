@@ -4,7 +4,7 @@ import logging
 import os
 
 
-#os.environ["MXNET_CUDNN_AUTOTUNE_DEFAULT"] = "1"
+os.environ["MXNET_CUDNN_AUTOTUNE_DEFAULT"] = "1"
 
 
 def fit(args, network, data_loader, batch_end_callback=None):
@@ -79,8 +79,8 @@ def fit(args, network, data_loader, batch_end_callback=None):
         learning_rate      = args.lr,
         momentum           = 0.9,
         wd                 = 0.00001,
-	initializer 	   = mx.init.Uniform(scale=0.5),
-       # initializer        = mx.init.Xavier(factor_type="in", magnitude=3),
+	#initializer 	   = mx.init.Uniform(scale=0.5),
+        initializer        = mx.init.Xavier(factor_type="in", magnitude=3),
         **model_args)
 
     eval_metrics = ['accuracy','ce']
