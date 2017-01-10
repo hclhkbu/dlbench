@@ -88,7 +88,7 @@ for tool in tools:
 		os.chdir(work_dir)
 		exp_args = experiment.split(";")
 		print "\n-------Benchmarking " + tool + " " + exp_args[1] + "-------"
-		log_file = tool + "-" + exp_args[0] + "-" + exp_args[1] + "-" +"gpu"+	exp_args[2] + "-" + device_name + "-" +"b"+ exp_args[4] + "-" 
+		log_file = tool + "-" + exp_args[0] + "-" + exp_args[1] + "-" +"gpu"+ exp_args[2] + "-" + device_name + "-" +"b"+ exp_args[4] + "-" 
 		log_file += time.ctime()+ "-" + host_name + ".log"
 		log_file = log_file.replace(" ","_")
 		bm_script = "python " + tool + "bm.py" 
