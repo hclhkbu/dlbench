@@ -4,7 +4,7 @@ import logging
 import os
 
 
-os.environ["MXNET_CUDNN_AUTOTUNE_DEFAULT"] = "1"
+#os.environ["MXNET_CUDNN_AUTOTUNE_DEFAULT"] = "1"
 
 
 def fit(args, network, data_loader, batch_end_callback=None):
