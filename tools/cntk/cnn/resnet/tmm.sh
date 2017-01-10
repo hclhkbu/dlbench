@@ -8,6 +8,7 @@ mpirun -np ${gpu_count} -machinefile cluster${gpu_count} cntk configFile=resnet.
 cntk configFile=resnet.cntk command=Test
 end=`date +%s.%N`
 runtime=$( echo "$end - $start" | bc -l )
+echo "GPUCount: ${gpu_count}"
 echo "MinibatchSize: ${minibatchSize}" 
 echo "finished with execute time: ${runtime}" 
 rm -rf Output/*

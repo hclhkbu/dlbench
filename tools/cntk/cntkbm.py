@@ -31,17 +31,20 @@ os.environ['OPENBLAS_NUM_THREADS'] = args.cpuCount
 root_path = os.path.dirname(os.path.abspath(__file__))
 tool_path = root_path + "/" + args.netType
 if os.path.exists(tool_path + "/" + args.network):
-	tool_path = tool_path + "/" + args.network
+    tool_path = tool_path + "/" + args.network
 os.chdir(tool_path)
 log_file = args.log
 if ".log" not in log_file:
-	log_file += ".log"
+    log_file += ".log"
 log_path = os.getcwd() + "/" + log_file
 cmd =  ' deviceId=' + args.devId + ' minibatchSize=' + args.batchSize +' maxEpochs=' + args.numEpochs 
 if int(args.gpuCount) > 1:
-	cmd = 'CUDA_VISIBLE_DEVICES=' + args.devId + cmd + ' gpu_count=' + args.gpuCount + ' ./tm.sh '
+    if int(args.gpuCount) > 4:
+        cmd = cmd + ' gpu_count=' + args.gpuCount + ' ./tmm.sh '
+    else:
+        cmd = 'CUDA_VISIBLE_DEVICES=' + args.devId + cmd + ' gpu_count=' + args.gpuCount + ' ./tm.sh '
 else:
-	cmd += ' ./t.sh '
+    cmd += ' ./t.sh '
 cmd += ' > ' + log_path + ' 2>&1'
 
 ## Execute cmd 
