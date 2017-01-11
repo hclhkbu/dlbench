@@ -248,7 +248,7 @@ def fit(args, network, data_loader, batch_end_callback=None):
         momentum=0.9,
         wd=0.0001,
 	optimizer=args.optimizer,
-	epoch_size = epoch_size,
+	#epoch_size = epoch_size,
         #optimizer='Nesterov',
         # Note we initialize BatchNorm beta and gamma as that in
         # https://github.com/facebook/fb.resnet.torch/
@@ -261,7 +261,7 @@ def fit(args, network, data_loader, batch_end_callback=None):
             [mx.init.Xavier(rnd_type='uniform', factor_type='in', magnitude=1),
              Init(rnd_type='gaussian', factor_type='in', magnitude=1)]
         ),
-        #lr_scheduler=Scheduler(epoch_step=[80, 160], factor=0.1, epoch_size=epoch_size),
+        # lr_scheduler=Scheduler(epoch_step=[80, 160], factor=0.1, epoch_size=epoch_size),
         **model_args)
 
     eval_metrics = ['accuracy', 'ce']

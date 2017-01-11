@@ -58,7 +58,9 @@ else:
 numNodes = 1 if args.hostFile is None else int(subprocess.check_output("cat " + args.hostFile + " | wc -l", shell=True).strip())
 if args.hostFile is not None:
     cmd += "PS_VERBOSE=0 nohup python ../multi-nodes-support/launch.py --launcher ssh -n " + str(numNodes) + " -s 1 -H " + args.hostFile + " " + pyscript
-    cmd += " --kv-store dist_sync" + " --num-nodes " + str(numNodes) + " "
+    cmd += " --kv-store dist_sync" + " --num-nodes " + str(numNodes) + " " 
+    if network == "resnet":  cmd += "--optimizer SGD "
+    os.system("sh monitorkill.sh >& kill.log &")
 else:
     cmd += pyscript
 
@@ -95,12 +97,17 @@ t = time.time()
 if args.debug: print "cmd: " +  cmd
 os.system(cmd)
 t = time.time() - t
+if args.hostFile is not None:
+	if args.debug: print "kill monitorkill"
+	os.system("kill -9 `ps auw | grep pengfei | grep monitorkill | awk '{print $2}'`")
+	os.system("kill -9 `ps auw | grep pengfei | grep sleep | awk '{print $2}'`")
 if args.debug: print("Time diff: " + str(t))
 logPath = exePath + logfile
 catLog = "cat " + logPath
 with open(logPath, "a") as logFile:
     logFile.write("Total time: " + str(t) + "\n")
     logFile.write("cmd: " + cmd + "\n")
+if args.debug: os.system(catLog);
 os.system("cp " + logPath + " ../../logs")
 totalEpochTime = subprocess.check_output( catLog + " | grep Time | cut -d\'=\' -f2 | paste -sd+ - | bc", shell=True)
 numEpoch = subprocess.check_output(catLog + " | grep Time | cut -d\'=\' -f2 | wc -l", shell=True)

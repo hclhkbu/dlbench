@@ -49,7 +49,6 @@ model = nn.Linear(64, 10)(model)
 model = nn.LogSoftMax()(model)
 
 model = nn.gModule({input}, {model})
---model:cuda()
 print(model)
 --print(#model:forward(torch.randn(512, 3, 32,32):cuda()))
 return model

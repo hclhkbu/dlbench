@@ -25,12 +25,12 @@ echo "Note that batch size is for each GPU core"
 #python mxnetbm.py -log rnntest -batchSize 64 -network lstm32 -devId 0,1,2,3 -numEpochs 2
 #cat rnn/rnntest.log
 
-echo "Multiple machines all GPU:"
-echo "Resnet:"
-python mxnetbm.py -log MMtestlogresnet -batchSize 128 -network resnet -devId 0,1,2,3 -numEpochs 4 -hostFile `pwd`/hosts
+echo "=======Multiple machines all GPU:======="
+echo "=======Resnet:======="
+python mxnetbm.py -log MMtestlogresnet -batchSize 128 -network resnet -devId 0,1,2,3 -numEpochs 4 -hostFile `pwd`/hosts -lr 0.01  #-debug True
 sleep 5
-echo "Alexnet:"
-python mxnetbm.py -log MMtestlogalexnet -batchSize 512 -network alexnet -devId 0,1,2,3 -numEpochs 4 -hostFile `pwd`/hosts
+echo "=======Alexnet:======="
+python mxnetbm.py -log MMtestlogalexnet -batchSize 512 -network alexnet -devId 0,1,2,3 -numEpochs 4 -hostFile `pwd`/hosts -lr 0.01 #-debug True
 sleep 5
-echo "FCN5:"
-python mxnetbm.py -log MMtestlogfcn5 -batchSize 512 -network fcn5 -devId 0,1,2,3 -numEpochs 4 -hostFile `pwd`/hosts
+echo "=======FCN5:======="
+python mxnetbm.py -log MMtestlogfcn5 -batchSize 512 -network fcn5 -devId 0,1,2,3 -numEpochs 4 -hostFile `pwd`/hosts -lr 0.01       #-debug True

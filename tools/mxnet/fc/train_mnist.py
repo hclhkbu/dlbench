@@ -1,4 +1,5 @@
 import os, sys
+sys.path[1] = '/home/comp/pengfeixu/.local/lib/python2.7/site-packages/mxnet-0.7.0-py2.7.egg'
 import mxnet as mx
 import argparse
 import train_model

@@ -33,25 +33,25 @@ if args.config is not None:
 		if len(line) < 1 or "None" in line:
 			continue 
 		if not config_experiments:	
-			if "flag" in line:
+			if "flag:" in line:
 				flag = line.split(':')[1]
-			elif "tools" in line:
+			elif "tools:" in line:
 				tools = line.split(':')[1].split(',')
 			elif "{" in line:
 				config_experiments = True
-			elif "host_file" in line:
+			elif "host_file:" in line:
 				host_file = line.split(':')[1]
-			elif "cpu_name" in line:
+			elif "cpu_name:" in line:
 				cpu_name = line.split(':')[1]
-			elif "device_name" in line:
+			elif "device_name:" in line:
 				device_name = line.split(':')[1]
-			elif "cuda_driver" in line:
+			elif "cuda_driver:" in line:
 				cuda_driver = line.split(':')[1]
-			elif "cudnn" in line:
+			elif "cudnn:" in line:
 				cudnn = line.split(':')[1]
-			elif "cuda" in line:
+			elif "cuda:" in line:
 				cuda = line.split(':')[1]
-			elif "cpu_count" in line:
+			elif "cpu_count:" in line:
 				cpu_count = line.split(':')[1]
 		else:
 			if "}" in line:
@@ -66,9 +66,9 @@ else:
 post_flags = " -f " + flag + " -d " + device_name + " -c " + cpu_count + " -P " + cpu_name + " -A unknown" + " -r " + cuda_driver + " -C " + cuda + " -D " + cudnn
 
 if args.debug:
-	print "[DEBUG] Defalut post flags:" + post_flags
-	print "[DEBUG] Tool(s):" + tools
-	print "[DEBUG] Experiments:" + experiments
+	print "[DEBUG] Defalut post flags:" + str(post_flags)
+	print "[DEBUG] Tool(s):" + str(tools)
+	print "[DEBUG] Experiments:" + str(experiments)
 
 # Benchmark each tool
 root_path = os.path.dirname(os.path.abspath(__file__))
@@ -88,7 +88,7 @@ for tool in tools:
 		os.chdir(work_dir)
 		exp_args = experiment.split(";")
 		print "\n-------Benchmarking " + tool + " " + exp_args[1] + "-------"
-		log_file = tool + "-" + exp_args[0] + "-" + exp_args[1] + "-" +"gpu"+	exp_args[2] + "-" + device_name + "-" +"b"+ exp_args[4] + "-" 
+		log_file = tool + "-" + exp_args[0] + "-" + exp_args[1] + "-" +"gpu"+ exp_args[2] + "-" + device_name + "-" +"b"+ exp_args[4] + "-" 
 		log_file += time.ctime()+ "-" + host_name + ".log"
 		log_file = log_file.replace(" ","_")
 		bm_script = "python " + tool + "bm.py" 
