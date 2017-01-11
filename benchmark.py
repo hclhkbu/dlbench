@@ -94,7 +94,7 @@ for tool in tools:
 		bm_script = "python " + tool + "bm.py" 
 		bm_script += " -netType "+exp_args[0]+" -log "+log_file+" -batchSize "+exp_args[4]+" -network "+exp_args[1]+" -lr "+exp_args[7] + " -cpuCount " + cpu_count
 		bm_script += " -devId " + exp_args[2] + " -numEpochs " + exp_args[5] + " -epochSize " + exp_args[6] + " -gpuCount " + exp_args[3]
-		if host_file is not None:
+		if host_file is not None and len(host_file) > 4:
 			bm_script += " -hostFile " + host_file
 		print bm_script
 		try:
