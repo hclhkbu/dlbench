@@ -1,1 +1,1 @@
-python benchmark.py -config configs/cntkmnbm6.config 
+python benchmark.py -config configs/cntkmnbm7.config 
