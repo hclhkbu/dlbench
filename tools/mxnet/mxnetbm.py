@@ -66,6 +66,7 @@ else:
 
 nGPU = len(args.devId.split(','))
 batchSize = int(args.batchSize)*nGPU
+if "alexnet" in network and batchSize == 2048: batchSize = 2049 #alexnet bug, 2048 will cause error
 numEpochs = args.numEpochs
 cmd += " --batch-size " + str(batchSize) + " --num-epochs " + numEpochs + " --num-examples " + numSamples
 
