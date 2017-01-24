@@ -106,10 +106,10 @@ Train = {
         # TODO: try less bits?
         ParallelTrain = {
             parallelizationMethod = "DataParallelSGD"
-            distributedMBReading = "false"
-            parallelizationStartEpoch = 1 
+            distributedMBReading = "true"
+            parallelizationStartEpoch = 2
             DataParallelSGD = {
-                gradientBits = 2 
+                gradientBits = 1 
             }
         }
         
