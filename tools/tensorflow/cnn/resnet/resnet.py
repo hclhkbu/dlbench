@@ -75,7 +75,7 @@ def inference_small_config(x, c):
 
     # post-net
     #x = tf.nn.avg_pool(x, ksize=[1, 8, 8, 1], strides=[1, 1, 1, 1], padding="VALID", name="avg_pool")
-    x = tf.reduce_mean(x, reduction_indices=[1, 2], name="avg_pool")
+    x = tf.reduce_mean(x, axis=[1, 2], name="avg_pool")
 
     if c['num_classes'] != None:
         with tf.variable_scope('fc'):
@@ -85,13 +85,13 @@ def inference_small_config(x, c):
 
 
 def loss(logits, labels):
-    cross_entropy = tf.nn.sparse_softmax_cross_entropy_with_logits(logits, labels)
+    cross_entropy = tf.nn.sparse_softmax_cross_entropy_with_logits(logits=logits, labels=labels)
     cross_entropy_mean = tf.reduce_mean(cross_entropy)
  
     regularization_losses = tf.get_collection(tf.GraphKeys.REGULARIZATION_LOSSES)
 
     loss_ = tf.add_n([cross_entropy_mean] + regularization_losses)
-    tf.scalar_summary('loss', loss_)
+    tf.summary.scalar('loss', loss_)
 
     return loss_
 

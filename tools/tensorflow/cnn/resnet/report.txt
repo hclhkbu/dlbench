@@ -1,37 +1,37 @@
 --------------------------------------------------------------------------------
-Processing file 'resnet.py'
- outputting to 'resnet_upgraded.py'
+Processing file 'resnet_cifar10_multi_gpu.py'
+ outputting to 'resnet_cifar10_multi_gpu_upgraded.py'
 --------------------------------------------------------------------------------
 
-'resnet.py' Line 88
+'resnet_cifar10_multi_gpu.py' Line 123
 --------------------------------------------------------------------------------
 
-Added keyword 'logits' to reordered function 'tf.nn.sparse_softmax_cross_entropy_with_logits'
-Added keyword 'labels' to reordered function 'tf.nn.sparse_softmax_cross_entropy_with_logits'
+Renamed function 'tf.all_variables' to 'tf.global_variables'
 
-    Old:     cross_entropy = tf.nn.sparse_softmax_cross_entropy_with_logits(logits, labels)
-                                                                                            
-    New:     cross_entropy = tf.nn.sparse_softmax_cross_entropy_with_logits(logits=logits, labels=labels)
-                                                                            ~~~~~~~        ~~~~~~~        
+    Old:         saver = tf.train.Saver(tf.all_variables())
+                                        ~~~~~~~~~~~~~~~~    
+    New:         saver = tf.train.Saver(tf.global_variables())
+                                        ~~~~~~~~~~~~~~~~~~~    
 
-'resnet.py' Line 94
+'resnet_cifar10_multi_gpu.py' Line 126
 --------------------------------------------------------------------------------
 
-Renamed function 'tf.scalar_summary' to 'tf.summary.scalar'
+Renamed function 'tf.initialize_all_variables' to 'tf.global_variables_initializer'
 
-    Old:     tf.scalar_summary('loss', loss_)
-             ~~~~~~~~~~~~~~~~~                
-    New:     tf.summary.scalar('loss', loss_)
-             ~~~~~~~~~~~~~~~~~                
+    Old:         init = tf.initialize_all_variables()
+                        ~~~~~~~~~~~~~~~~~~~~~~~~~~~   
+    New:         init = tf.global_variables_initializer()
+                        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~   
 
-'resnet.py' Line 78
+'resnet_cifar10_multi_gpu.py' Line 62
 --------------------------------------------------------------------------------
 
-Renamed keyword argument from 'reduction_indices' to 'axis'
+Added keyword 'concat_dim' to reordered function 'tf.concat'
+Added keyword 'values' to reordered function 'tf.concat'
 
-    Old:     x = tf.reduce_mean(x, reduction_indices=[1, 2], name="avg_pool")
-                                   ~~~~~~~~~~~~~~~~~~                         
-    New:     x = tf.reduce_mean(x, axis=[1, 2], name="avg_pool")
-                                   ~~~~~                         
+    Old:         grad = tf.concat(0, grads)
+                                            
+    New:         grad = tf.concat(concat_dim=0, values=grads)
+                                  ~~~~~~~~~~~   ~~~~~~~       
 
 
