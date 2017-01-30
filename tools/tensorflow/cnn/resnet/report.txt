@@ -1,0 +1,37 @@
+--------------------------------------------------------------------------------
+Processing file 'resnet.py'
+ outputting to 'resnet_upgraded.py'
+--------------------------------------------------------------------------------
+
+'resnet.py' Line 88
+--------------------------------------------------------------------------------
+
+Added keyword 'logits' to reordered function 'tf.nn.sparse_softmax_cross_entropy_with_logits'
+Added keyword 'labels' to reordered function 'tf.nn.sparse_softmax_cross_entropy_with_logits'
+
+    Old:     cross_entropy = tf.nn.sparse_softmax_cross_entropy_with_logits(logits, labels)
+                                                                                            
+    New:     cross_entropy = tf.nn.sparse_softmax_cross_entropy_with_logits(logits=logits, labels=labels)
+                                                                            ~~~~~~~        ~~~~~~~        
+
+'resnet.py' Line 94
+--------------------------------------------------------------------------------
+
+Renamed function 'tf.scalar_summary' to 'tf.summary.scalar'
+
+    Old:     tf.scalar_summary('loss', loss_)
+             ~~~~~~~~~~~~~~~~~                
+    New:     tf.summary.scalar('loss', loss_)
+             ~~~~~~~~~~~~~~~~~                
+
+'resnet.py' Line 78
+--------------------------------------------------------------------------------
+
+Renamed keyword argument from 'reduction_indices' to 'axis'
+
+    Old:     x = tf.reduce_mean(x, reduction_indices=[1, 2], name="avg_pool")
+                                   ~~~~~~~~~~~~~~~~~~                         
+    New:     x = tf.reduce_mean(x, axis=[1, 2], name="avg_pool")
+                                   ~~~~~                         
+
+
