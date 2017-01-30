@@ -20,6 +20,7 @@ from __future__ import division
 from __future__ import print_function
 
 import os
+import six
 
 #from six.moves import xrange  # pylint: disable=redefined-builtin
 import tensorflow as tf
@@ -146,7 +147,7 @@ def distorted_inputs(data_dir, batch_size):
     labels: Labels. 1D tensor of [batch_size] size.
   """
   filenames = [os.path.join(data_dir, 'data_batch_%d.bin' % i)
-               for i in xrange(1, 6)]
+               for i in six.moves.xrange(1, 6)]
   for f in filenames:
     if not tf.gfile.Exists(f):
       raise ValueError('Failed to find file: ' + f)
@@ -208,7 +209,7 @@ def inputs(eval_data, data_dir, batch_size):
   shuffle = False
   if not eval_data:
     filenames = [os.path.join(data_dir, 'data_batch_%d.bin' % i)
-                 for i in xrange(1, 6)]
+                 for i in six.moves.xrange(1, 6)]
     shuffle = True
     num_examples_per_epoch = NUM_EXAMPLES_PER_EPOCH_FOR_TRAIN
   else:

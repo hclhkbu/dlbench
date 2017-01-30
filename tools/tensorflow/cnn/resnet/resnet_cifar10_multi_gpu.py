@@ -1,5 +1,6 @@
 from datetime import datetime
 
+import six
 import time
 import cifar10_input
 
@@ -93,7 +94,7 @@ def train():
 
         tower_grads = []
         average_loss_tensor = []
-        for i in xrange(FLAGS.num_gpus):
+        for i in six.moves.range(FLAGS.num_gpus):
             print('what is i: ', i)
             with tf.device('/gpu:%s'%device_ids[i]):
                 with tf.name_scope('%s_%s' % ('TOWER', device_ids[i])) as n_scope:
@@ -137,7 +138,7 @@ def train():
 
         step = 0
         average_loss = 0.0
-        for step in xrange(iterations):
+        for step in six.moves.xrange(iterations):
             start_time = time.time()
             #_, loss_v = sess.run([train_op, total_loss])
             _, loss_v = sess.run([train_op, average_op])
@@ -161,7 +162,7 @@ def train():
         coord.request_stop()
         coord.join(threads)
         average_batch_time /= iterations
-        print 'average_batch_time: ', average_batch_time
+        print('average_batch_time: ', average_batch_time)
         print ('epoch_info: %s'% ','.join(epochs_info))
 
 
