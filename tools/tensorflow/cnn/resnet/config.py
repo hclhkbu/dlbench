@@ -1,5 +1,6 @@
 # This is a variable scope aware configuation object for TensorFlow
 
+import six
 import tensorflow as tf
 
 FLAGS = tf.app.flags.FLAGS
@@ -7,7 +8,7 @@ FLAGS = tf.app.flags.FLAGS
 class Config:
     def __init__(self):
         root = self.Scope('')
-        for k, v in FLAGS.__dict__['__flags'].iteritems():
+        for k, v in six.iteritems(FLAGS.__dict__['__flags']):
             root[k] = v
         self.stack = [ root ]
 
