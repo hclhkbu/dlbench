@@ -59,7 +59,7 @@ def average_gradients(tower_grads):
             grads.append(expanded_g)
 
         # Average over the 'tower' dimension.
-        grad = tf.concat(0, grads)
+        grad = tf.concat(axis=0, values=grads)
         grad = tf.reduce_mean(grad, 0)
 
         # Keep in mind that the Variables are redundant because they are shared
@@ -105,6 +105,7 @@ def train():
         average_loss_tensor = []
         for i in six.moves.range(FLAGS.num_gpus):
             print('what is i: ', i)
+
             with tf.device(assign_to_device('/gpu:%s'%device_ids[i])):
                 with tf.name_scope('%s_%s' % ('TOWER', device_ids[i])) as n_scope:
                     images, labels = cifar10_input.inputs(False, FLAGS.data_dir, FLAGS.batch_size)
@@ -112,27 +113,27 @@ def train():
                     logits = inference_small(images, is_training=True, num_blocks=9)
                     loss_tensor = loss(logits, labels)
 
-                    tf.add_to_collection('losses', loss_tensor)
-                    tf.add_n(tf.get_collection('losses'), name='total_loss')
+                        tf.add_to_collection('losses', loss_tensor)
+                        tf.add_n(tf.get_collection('losses'), name='total_loss')
 
-                    losses = tf.get_collection('losses', n_scope)
-                    total_loss = tf.add_n(losses, name='total_loss')
-                    average_loss_tensor.append(total_loss)
+                        losses = tf.get_collection('losses', n_scope)
+                        total_loss = tf.add_n(losses, name='total_loss')
+                        average_loss_tensor.append(total_loss)
 
-                    tf.get_variable_scope().reuse_variables()
-                    grads = optimizer.compute_gradients(total_loss)
+                        #tf.get_variable_scope().reuse_variables()
+                        grads = optimizer.compute_gradients(total_loss)
 
-                    tower_grads.append(grads)
+                        tower_grads.append(grads)
         grads = average_gradients(tower_grads)
         apply_gradient_op = optimizer.apply_gradients(grads, global_step=global_step)
         train_op = apply_gradient_op
         average_op = tf.reduce_mean(average_loss_tensor, 0)
 
         # Create a saver.
-        saver = tf.train.Saver(tf.all_variables())
+        saver = tf.train.Saver(tf.global_variables())
 
         # Build an initialization operation.
-        init = tf.initialize_all_variables()
+        init = tf.global_variables_initializer()
         sess = tf.Session(config=config)
         sess.run(init)
 
