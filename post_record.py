@@ -48,6 +48,7 @@ if __name__ == '__main__':
     parser.add_argument('-C', '--cuda', help='The version of CUDA', default='8.0')
     parser.add_argument('-D', '--cudnn', help='The version of cuDNN', default='5.1')
     parser.add_argument('-r', '--cuda_driver', help='The version of cuda driver', default='367.48')
+    parser.add_argument('-v', '--cuda_driver', help='The version of cuda driver', default='v7')
     p = parser.parse_args()
     object_id = post_record(flag=p.flag, network=p.network, batch_size=p.batch_size, device_name=p.device_name,
                 gpu_count=p.gpu_count, cpu_count=p.cpu_count, cpu_name=p.cpu_name, epoch_size=p.epoch_size, epoch=p.epoch,
