@@ -58,14 +58,14 @@ Train = {
         # initValueScale are determined to generate Gaussians with variance of 0.01 and 0.005 (for the two DenseLayers)
         model = Sequential (
             ConvolutionalLayer {96, (11:11), stride=(4:4), pad=false, init='gaussian', initValueScale=0.95265} : ReLU : 
-            LRN {1.0, 2, 0.0001, 0.75} : 
+            #LRN {1.0, 2, 0.0001, 0.75} : 
             MaxPoolingLayer    {(3:3), stride=(2:2)} :
             ConvolutionalLayer {256, (5:5), pad = true, init='gaussian', initValueScale=2.44978, bias=true} : ReLU : 
-            LRN {1.0, 2, 0.0001, 0.75} : 
+            #LRN {1.0, 2, 0.0001, 0.75} : 
             MaxPoolingLayer    {(3:3), stride=(2:2)} :
-            ConvolutionalLayer {256, (3:3), pad = true, init='gaussian', initValueScale=2.07857} : ReLU : 
+            ConvolutionalLayer {384, (3:3), pad = true, init='gaussian', initValueScale=2.07857} : ReLU : 
             ConvolutionalLayer {384, (3:3), pad = true, init='gaussian', initValueScale=2.93945, bias=true} : ReLU : 
-            ConvolutionalLayer {384, (3:3), pad = true, init='gaussian', initValueScale=2.93945, bias=true} : ReLU : 
+            ConvolutionalLayer {256, (3:3), pad = true, init='gaussian', initValueScale=2.93945, bias=true} : ReLU : 
             MaxPoolingLayer    {(3:3), stride=(2:2)} :
             DenseLayer         {4096, activation=ReLU, init='gaussian', initValueScale=2.40038, bias=true} : Dropout :
             DenseLayer         {4096, activation=ReLU, init='gaussian', initValueScale=1.6, bias=true} : Dropout :
@@ -107,9 +107,9 @@ Train = {
         ParallelTrain = {
             parallelizationMethod = "DataParallelSGD"
             distributedMBReading = "true"
-            parallelizationStartEpoch = 1 
+            parallelizationStartEpoch = 2
             DataParallelSGD = {
-                gradientBits = 1
+                gradientBits = 1 
             }
         }
         

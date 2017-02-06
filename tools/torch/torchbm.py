@@ -15,13 +15,14 @@ parser.add_argument('-numEpochs', type=str, default='10', help='number of epochs
 parser.add_argument('-epochSize', type=str, help='number of training data per epoch')
 parser.add_argument('-numThreads', type=str, default='8', help='number of Threads, default=8')
 parser.add_argument('-hostFile', type=str, help='path to running hosts(config in host file) for multiple machine training.')
-parser.add_argument('-gpuCount', type=str, help='number of gpus in used')
+parser.add_argument('-gpuCount', type=str, default='1', help='number of gpus in used')
 parser.add_argument('-cpuCount', type=str, default='1', help='number of cpus in used for cpu version')
-parser.add_argument('-lr', type=str, help='learning rate')
+parser.add_argument('-lr', type=str, default='0.01', help='learning rate')
 parser.add_argument('-netType', type=str, help='network type')
+parser.add_argument('-debug', type=bool, default=False, help='debug mode')
 
 args = parser.parse_args()
-#print(args)
+if args.debug: print("args: " + str(args))
 
 # Set system variable
 #os.environ['OMP_NUM_THREADS'] = args.cpuCount 
@@ -59,11 +60,11 @@ elif "lstm" in network:
 	if ".log" not in logfile:
 		logfile += ".log"
 	cmd += " >& " + logfile
-	#print cmd
+	if args.debug: print "cmd: " + cmd
 	t = time.time()
 	os.system(cmd)
 	t = time.time() - t
-	#print "total time: " + str(t)
+	if args.debug: print "total time: " + str(t)
 	with open(logfile, "a") as logFile:
 		logFile.write("Total time: " + str(t) + "\n")
 		logFile.write(cmd + "\n")
@@ -73,11 +74,11 @@ elif "lstm" in network:
 	numEpoch = subprocess.check_output(catLog + " | grep Speed | cut -d':' -f2 | wc -l", shell=True).strip()
 	avgBatch = float(totalEpochBatchTime)/float(numEpoch)
 	avgBatch = avgBatch/1000.0
-	#print("Avg Batch: " + str(avgBatch))
+	if args.debug: print("Avg Batch: " + str(avgBatch))
 	trainPPL = subprocess.check_output(catLog + "|grep \"Training PPL\" | cut -d':' -f2", shell=True).replace("	"," ").strip().split("\n")
 	valPPL = subprocess.check_output(catLog + "|grep \"Validation PPL\" | cut -d':' -f2", shell=True).replace("	"," ").strip().split("\n")
-	#print trainPPL
-	#print valPPL
+	if args.debug: print "trainPPL: " + trainPPL
+	if args.debug: print "valPPL: " + valPPL
 	info = " -I "
 	for i in range(int(numEpoch)):
 		if i != 0:
@@ -123,7 +124,7 @@ if ".log" not in logfile:
 
 cmd += ' -logfile ' + logfile + ' -save ' + logfile + " >& display.tmp"
 cmd = 'THC_CACHING_ALLOCATOR=1 ' + cmd
-#print(cmd)
+if args.debug: print("cmd:" + cmd)
 t = time.time()
 os.system(cmd)
 t = time.time() - t
@@ -131,28 +132,28 @@ with open(logfile, "a") as logFile:
 	logFile.write("Total time: " + str(t) + "\n")
 	logFile.write(cmd + "\n")
 os.system("cp " + logfile + " ../../logs")
-#print("Time diff: " + str(t))
+if args.debug: print("Time diff: " + str(t))
 os.system("rm display.tmp")
 getInfo = 'cat ' + logfile + ' | grep Info'
 totalEpochTime = subprocess.check_output( getInfo + " | grep time | cut -d' ' -f6 | cut -d':' -f2 | paste -sd+ - | bc", shell=True)
 numEpoch = subprocess.check_output(getInfo + " | grep time | cut -d' ' -f6 | cut -d':' -f2 | wc -l", shell=True)
-#print totalEpochTime
-#print numEpoch
+if args.debug: print "totalEpochTime: " + totalEpochTime
+if args.debug: print "numEpoch: " + numEpoch
 avgEpoch = 0
 if int(numEpoch) != 0:
     avgEpoch = float(totalEpochTime)/float(numEpoch)
 avgBatch = (avgEpoch/int(numSamples))*float(batchSize)
-#print("Avg Batch: " + str(avgBatch))
+if args.debug: print("Avg Batch: " + str(avgBatch))
 
 valAccuracy = subprocess.check_output(getInfo + "| grep accu | cut -d' ' -f7 | cut -d':' -f2", shell=True).strip().split('\n')
-#print valAccuracy
+if args.debug: print "valAccuracy: " + valAccuracy
 trainCE = subprocess.check_output(getInfo + "| grep Loss | cut -d' ' -f7 | cut -d':' -f2", shell=True).strip().split('\n')
-#print trainCE
+if args.debug: print "trainCE: " + trainCE
 
 info = ""
 for i in range(len(valAccuracy)):
     if i != 0:
         info += ","
     info += str(i) + ":" + valAccuracy[i] + ":" +trainCE[i]
-#print info 
+if args.debug: print "info: " + info 
 print "-t " + str(t) + " -a " + str(avgBatch) + " -I " + info

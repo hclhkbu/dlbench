@@ -1,5 +1,6 @@
 from datetime import datetime
 
+import six
 import time
 import cifar10_input
 
@@ -58,7 +59,7 @@ def average_gradients(tower_grads):
             grads.append(expanded_g)
 
         # Average over the 'tower' dimension.
-        grad = tf.concat(0, grads)
+        grad = tf.concat(axis=0, values=grads)
         grad = tf.reduce_mean(grad, 0)
 
         # Keep in mind that the Variables are redundant because they are shared
@@ -91,38 +92,48 @@ def train():
         #optimizer = tf.train.GradientDescentOptimizer(lr)
         optimizer = tf.train.MomentumOptimizer(lr, 0.9)
 
+        def assign_to_device(device, ps_device="/cpu:0"):
+            def _assign(op):
+                node_def = op if isinstance(op, tf.NodeDef) else op.node_def
+                if node_def.op == "Variable":
+                    return ps_device
+                else:
+                    return device
+            return _assign
+
         tower_grads = []
         average_loss_tensor = []
-        for i in xrange(FLAGS.num_gpus):
+        for i in six.moves.range(FLAGS.num_gpus):
             print('what is i: ', i)
-            with tf.device('/gpu:%s'%device_ids[i]):
+
+            with tf.device(assign_to_device('/gpu:%s'%device_ids[i])):
                 with tf.name_scope('%s_%s' % ('TOWER', device_ids[i])) as n_scope:
                     images, labels = cifar10_input.inputs(False, FLAGS.data_dir, FLAGS.batch_size)
                     #logits = inference(images, is_training=True)
                     logits = inference_small(images, is_training=True, num_blocks=9)
                     loss_tensor = loss(logits, labels)
 
-                    tf.add_to_collection('losses', loss_tensor)
-                    tf.add_n(tf.get_collection('losses'), name='total_loss')
+                        tf.add_to_collection('losses', loss_tensor)
+                        tf.add_n(tf.get_collection('losses'), name='total_loss')
 
-                    losses = tf.get_collection('losses', n_scope)
-                    total_loss = tf.add_n(losses, name='total_loss')
-                    average_loss_tensor.append(total_loss)
+                        losses = tf.get_collection('losses', n_scope)
+                        total_loss = tf.add_n(losses, name='total_loss')
+                        average_loss_tensor.append(total_loss)
 
-                    tf.get_variable_scope().reuse_variables()
-                    grads = optimizer.compute_gradients(total_loss)
+                        #tf.get_variable_scope().reuse_variables()
+                        grads = optimizer.compute_gradients(total_loss)
 
-                    tower_grads.append(grads)
+                        tower_grads.append(grads)
         grads = average_gradients(tower_grads)
         apply_gradient_op = optimizer.apply_gradients(grads, global_step=global_step)
         train_op = apply_gradient_op
         average_op = tf.reduce_mean(average_loss_tensor, 0)
 
         # Create a saver.
-        saver = tf.train.Saver(tf.all_variables())
+        saver = tf.train.Saver(tf.global_variables())
 
         # Build an initialization operation.
-        init = tf.initialize_all_variables()
+        init = tf.global_variables_initializer()
         sess = tf.Session(config=config)
         sess.run(init)
 
@@ -137,7 +148,7 @@ def train():
 
         step = 0
         average_loss = 0.0
-        for step in xrange(iterations):
+        for step in six.moves.xrange(iterations):
             start_time = time.time()
             #_, loss_v = sess.run([train_op, total_loss])
             _, loss_v = sess.run([train_op, average_op])
@@ -161,7 +172,7 @@ def train():
         coord.request_stop()
         coord.join(threads)
         average_batch_time /= iterations
-        print 'average_batch_time: ', average_batch_time
+        print('average_batch_time: ', average_batch_time)
         print ('epoch_info: %s'% ','.join(epochs_info))
 
 

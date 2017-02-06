@@ -86,21 +86,34 @@ def extract_info_cntk(filename):
     useful_lines = []
     for index, line in enumerate(content):
         if line.find('Finished Epoch') >= 0:
-            useful_lines.append(line)
+            if len(useful_lines) > 0:
+                if useful_lines[-1].find(line[0:len('Finished Epoch[23 of 40]')]) < 0:
+                    useful_lines.append(line)
+            else:
+                useful_lines.append(line)
+
+
     average_time = 0.0
     accuracies = []
     epoch_size = int(useful_lines[0].split('=')[1].split('*')[1].split(';')[0].strip())
     gpu_count = int(content[-3].split(':')[1])
     batch_size = int(content[-2].split(':')[1])
     actual_batch_size = batch_size * gpu_count
+    valid_line = 0
     for index, line in enumerate(useful_lines):
-        time_str = line.split('=')[-1].strip().strip('s')
-        average_time += float(time_str)
-        if index % gpu_count == 0:
+        try:
+            time_str = line.split('=')[-1].strip().strip('s')
+            average_time += float(time_str)
+            valid_line += 1
             loss = float(line.split('=')[1].split('*')[0].strip())
             accuracies.append((index, loss))
+        except:
+            pass
+        #if index % gpu_count == 0:
+        #    loss = float(line.split('=')[1].split('*')[0].strip())
+        #    accuracies.append((index, loss))
 
-    average_epoch_time = average_time/len(useful_lines)
+    average_epoch_time = average_time/valid_line
     total_time = float(content[-1].split(':')[1])
     average_batch_time = average_epoch_time/((epoch_size + actual_batch_size - 1)/ actual_batch_size)
 

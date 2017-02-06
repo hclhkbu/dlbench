@@ -58,9 +58,9 @@ Train=[
             parallelizationMethod="DataParallelSGD"
             #distributedMBReading="true"
             distributedMBReading=$distributedMBReading$
-            parallelizationStartEpoch=1
+            parallelizationStartEpoch=2
             DataParallelSGD=[
-                gradientBits=4
+                gradientBits=1
             ]
         ]
     ]

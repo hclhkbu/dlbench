@@ -1,0 +1,37 @@
+--------------------------------------------------------------------------------
+Processing file 'resnet_cifar10_multi_gpu.py'
+ outputting to 'resnet_cifar10_multi_gpu_upgraded.py'
+--------------------------------------------------------------------------------
+
+'resnet_cifar10_multi_gpu.py' Line 123
+--------------------------------------------------------------------------------
+
+Renamed function 'tf.all_variables' to 'tf.global_variables'
+
+    Old:         saver = tf.train.Saver(tf.all_variables())
+                                        ~~~~~~~~~~~~~~~~    
+    New:         saver = tf.train.Saver(tf.global_variables())
+                                        ~~~~~~~~~~~~~~~~~~~    
+
+'resnet_cifar10_multi_gpu.py' Line 126
+--------------------------------------------------------------------------------
+
+Renamed function 'tf.initialize_all_variables' to 'tf.global_variables_initializer'
+
+    Old:         init = tf.initialize_all_variables()
+                        ~~~~~~~~~~~~~~~~~~~~~~~~~~~   
+    New:         init = tf.global_variables_initializer()
+                        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~   
+
+'resnet_cifar10_multi_gpu.py' Line 62
+--------------------------------------------------------------------------------
+
+Added keyword 'concat_dim' to reordered function 'tf.concat'
+Added keyword 'values' to reordered function 'tf.concat'
+
+    Old:         grad = tf.concat(0, grads)
+                                            
+    New:         grad = tf.concat(concat_dim=0, values=grads)
+                                  ~~~~~~~~~~~   ~~~~~~~       
+
+

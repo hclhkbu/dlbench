@@ -167,6 +167,30 @@ def inference(images):
 
     return affn1
 
+def inference2(images):
+    #pad1 = _padding(images, 2) 
+    conv1 = _conv (images, 3, 32, 5, 5, 1, 1, 'SAME')
+    pool1 = _mpool(conv1,  3, 3, 2, 2)
+    relu1 = _relu(pool1)
+    #norm1 = _norm(relu1, 3, 5e-05, 0.75)
+
+    #pad2 = _padding(relu1, 2)
+    conv2 = _conv (relu1,  32, 32, 5, 5, 1, 1, 'SAME')
+    pool2 = _mpool(conv2,  3, 3, 2, 2)
+    relu2 = _relu(pool2)
+    #norm2 = _norm(relu2, 3, 5e-05, 0.75)
+
+    #pad3 = _padding(relu2, 2)
+    conv3 = _conv (relu2,  32, 64, 5, 5, 1, 1, 'SAME')
+    relu3 = _relu(conv3)
+    pool3 = _avgpool(relu3, 3, 3, 2, 2) 
+    print('pool3: ', pool3)
+
+    resh1 = tf.reshape(pool3, [-1, 64 * 3 * 3])
+    affn1 = _affine(resh1, 64*3*3, 10)
+
+    return affn1
+
 
 def train():
   global parameters
@@ -183,6 +207,7 @@ def train():
       print('Images: ', images)
 
       logits = inference(images)
+      #logits = inference2(images)
       # Add a simple objective so we can calculate the backward pass.
       loss_value = loss(logits, labels)
       # Compute the gradient with respect to all the parameters.
