@@ -5,7 +5,7 @@
 ```
 -t $totalTimeInSecond -a $averageMiniBatchTimeInSecond -I $lossValueOfEachEpoch
 ```
-Example of $lossValueOfEachEpoch (There are 4 epochs\' item, and splitted by ',', and the 3 values in each item represent current epoch number, test accuracy and cross entropy value respectively.):
+Example of $lossValueOfEachEpoch (There are 4 epochs' item, and splitted by comma, and the 3 values in each item represent current epoch number, test accuracy and cross entropy value respectively.):
 ```
 0:-:2.32620807,1:-:2.49505453,2:-:2.30122152,3:-:2.30028142
 ```

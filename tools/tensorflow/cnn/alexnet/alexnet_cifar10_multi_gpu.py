@@ -226,10 +226,20 @@ def train():
         #optimizer = tf.train.GradientDescentOptimizer(lr)
         optimizer = tf.train.MomentumOptimizer(lr, 0.9)
 
+        def assign_to_device(device, ps_device="/cpu:0"):
+            def _assign(op):
+                node_def = op if isinstance(op, tf.NodeDef) else op.node_def
+                if node_def.op == "Variable":
+                    return ps_device
+                else:
+                    return device
+            return _assign
+
         tower_grads = []
         average_loss_tensor = []
         for i in xrange(FLAGS.num_gpus):
             print('what is i: ', i)
+            #with tf.device(assign_to_device('/gpu:%s'%device_ids[i])):
             with tf.device('/gpu:%s'%device_ids[i]):
                 with tf.name_scope('%s_%s' % ('TOWER', device_ids[i])) as n_scope:
                     _init_global_variables()
