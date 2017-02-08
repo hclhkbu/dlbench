@@ -18,8 +18,9 @@ parser.add_argument('-hostFile', type=str, help='path to running hosts(config in
 parser.add_argument('-gpuCount', type=str, help='number of gpus in used')
 parser.add_argument('-lr', type=str, help='learning rate')
 parser.add_argument('-netType', type=str, help='network type')
+parser.add_argument('-debug', type=bool, default=False, help='Debug mode or not')
 args = parser.parse_args()
-#print(args)
+if args.debug is True: print(args)
 
 
 # Build cmd for benchmark
@@ -27,10 +28,11 @@ cmd = ''
 
 
 # Execute cmd 
+if args.debug is True: print(cmd)
 t = time.time()
 os.system(cmd)
 t = time.time() - t
-#print("Time diff: " + str(t))
+if args.debug is True: print("Time diff: " + str(t))
 
 
 #Save log file
@@ -43,6 +45,6 @@ os.system("cp " + logPath + " ../../logs")
 
 # Parse log file and extract benchmark info
 avgBatch = (avgEpoch/int(numSamples))*float(batchSize)
-#print("Avg Batch: " + str(avgBatch))
+if args.debug is True: print("Avg Batch: " + str(avgBatch))
 info = ''
 print "-t " + str(t) + " -a " + str(avgBatch) + " -I " + info

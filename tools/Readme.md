@@ -9,4 +9,4 @@ Example of $lossValueOfEachEpoch (There are 4 epochs' item, and splitted by comm
 ```
 0:-:2.32620807,1:-:2.49505453,2:-:2.30122152,3:-:2.30028142
 ```
-- 4. All tests in common/testbm.sh should be passed before make it into use
+- 4. All tests in common/testbm.sh should be passed before put it into use
