@@ -135,7 +135,7 @@ def get_symbol(num_classes, num_layers, image_shape, conv_workspace=256, **kwarg
             raise ValueError("no experiments done on num_layers {}, you can do it youself".format(num_layers))
         units = per_unit * num_stages
     else:
-        if num_layers > 50:
+        if num_layers >= 50:
             filter_list = [64, 256, 512, 1024, 2048]
             bottle_neck = True
         else:
@@ -147,7 +147,6 @@ def get_symbol(num_classes, num_layers, image_shape, conv_workspace=256, **kwarg
         elif num_layers == 34:
             units = [3, 4, 6, 3]
         elif num_layers == 50:
-            bottle_neck = True
             units = [3, 4, 6, 3]
         elif num_layers == 101:
             units = [3, 4, 23, 3]
