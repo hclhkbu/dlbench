@@ -1,0 +1,7 @@
+# The train/test net protocol buffer definition
+#net: "ffn26752-b64.prototxt"
+base_lr: 0.01
+lr_policy: "fixed"
+max_iter: 200 
+display: 50
+#solver_mode: GPU
