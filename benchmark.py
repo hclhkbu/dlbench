@@ -6,6 +6,7 @@ import subprocess
 # Parse arguments
 parser = argparse.ArgumentParser(description='Benchmark deep learning tools')
 parser.add_argument('-config', type=str, help='Path to the config file')
+parser.add_argument('-post', type=bool, default=False, help='Post to our server. You should keep it False')
 parser.add_argument('-debug', type=bool, default=False, help='Debug benchmark.py')
 
 args = parser.parse_args()
@@ -106,10 +107,14 @@ for tool in tools:
 		post_flags += " " +  result_args + " -b " + exp_args[4] + " -g " + exp_args[3] + " -e " + exp_args[6] + " -E " + exp_args[5] 
 		post_flags += " -l " + log_file + " -T " + tool + " -n " + exp_args[1] 
 		os.chdir(root_path)
-		post_script = "python post_record.py " + post_flags
-		print post_script
-		print(subprocess.check_output(post_script, shell=True).strip().split('\n')[0])
-		post_flags = " -f " + flag + " -d " + device_name + " -c " + cpu_count + " -P " + cpu_name + " -A unknown" + " -r " + cuda_driver + " -C " + cuda + " -D " + cudnn
-		post_script = ''
+		if args.post is True:
+			post_script = "python post_record.py " + post_flags
+			print post_script
+			print(subprocess.check_output(post_script, shell=True).strip().split('\n')[0])
+			post_flags = " -f " + flag + " -d " + device_name + " -c " + cpu_count + " -P " + cpu_name + " -A unknown" + " -r " + cuda_driver + " -C " + cuda + " -D " + cudnn
+			post_script = ''
+		else:
+			print "Result:"
+			print result_args
 		print "Done!"
 
