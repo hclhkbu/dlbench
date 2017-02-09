@@ -112,18 +112,17 @@ def train():
                     #logits = inference(images, is_training=True)
                     logits = inference_small(images, is_training=True, num_blocks=9)
                     loss_tensor = loss(logits, labels)
+                    tf.add_to_collection('losses', loss_tensor)
+                    tf.add_n(tf.get_collection('losses'), name='total_loss')
 
-                        tf.add_to_collection('losses', loss_tensor)
-                        tf.add_n(tf.get_collection('losses'), name='total_loss')
+                    losses = tf.get_collection('losses', n_scope)
+                    total_loss = tf.add_n(losses, name='total_loss')
+                    average_loss_tensor.append(total_loss)
 
-                        losses = tf.get_collection('losses', n_scope)
-                        total_loss = tf.add_n(losses, name='total_loss')
-                        average_loss_tensor.append(total_loss)
+                    #tf.get_variable_scope().reuse_variables()
+                    grads = optimizer.compute_gradients(total_loss)
 
-                        #tf.get_variable_scope().reuse_variables()
-                        grads = optimizer.compute_gradients(total_loss)
-
-                        tower_grads.append(grads)
+                    tower_grads.append(grads)
         grads = average_gradients(tower_grads)
         apply_gradient_op = optimizer.apply_gradients(grads, global_step=global_step)
         train_op = apply_gradient_op
