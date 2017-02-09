@@ -4,8 +4,8 @@
 ###########
 # CNN
 ###########
-#REPO_HOME=/home/comp/csshshi/repositories/dpBenchmark/synthetic
-REPO_HOME=/home/ipdps/dpBenchmark/synthetic
+REPO_HOME=/home/comp/pengfeixu/dlbench/synthetic
+#REPO_HOME=/home/ipdps/dpBenchmark/synthetic
 current_path=$REPO_HOME/scripts
 experiments_path=$REPO_HOME/experiments
 log_path=$REPO_HOME/logs
@@ -23,8 +23,8 @@ device_id="${device_id:-0}"
 
 OMP_NUM_THREADS="${OMP_NUM_THREADS:-1}"
 FLAG="${FLAG:-syntheticSgbenchmark2}" # start from 1 
-#cpu_name="E5-2630v3"
-cpu_name="i7-3820"
+cpu_name="E5-2630v4"
+#cpu_name="i7-3820"
 device_name="${device_name:-K80}"
 epoch_size=null
 cuda="8.0"
@@ -36,7 +36,7 @@ hostName=`hostname`
 
 
 #tools=( "caffe" "cntk" "tensorflow" "torch" )
-tools=( "torch" )
+tools=( "mxnet" )
 benchmark_logfile=${current_path}/${network_type}-${network_name}-gpu${device_id}.bm
 echo -e 'GPU:'${device_id}'\nNUM_THREADS (for CPU): '${OMP_NUM_THREADS}'\nNetwork: '${network_name}'\nEpochs: '${epochs}'\nMinibatch: '${minibatch}'\nIterations: '${iterations}'\nBenchmark Time: '${running_time}'\n_________________\n'>> ${benchmark_logfile}
 echo -e 'ToolName\t\t\tAverageTime(s)'>>${benchmark_logfile}
