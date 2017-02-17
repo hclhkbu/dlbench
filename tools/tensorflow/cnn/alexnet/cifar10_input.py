@@ -113,20 +113,20 @@ def _generate_image_and_label_batch(image, label, min_queue_examples,
   """
   # Create a queue that shuffles the examples, and then
   # read 'batch_size' images + labels from the example queue.
-  num_preprocess_threads = 4 
+  num_preprocess_threads = 16
   if shuffle:
     images, label_batch = tf.train.shuffle_batch(
         [image, label],
         batch_size=batch_size,
         num_threads=num_preprocess_threads,
-        capacity=min_queue_examples + 3 * batch_size,
+        capacity=min_queue_examples + 16 * batch_size,
         min_after_dequeue=min_queue_examples)
   else:
     images, label_batch = tf.train.batch(
         [image, label],
         batch_size=batch_size,
         num_threads=num_preprocess_threads,
-        capacity=min_queue_examples + 3 * batch_size)
+        capacity=min_queue_examples + 16 * batch_size)
 
   # Display the training images in the visualizer.
   #tf.image_summary('images', images)
@@ -235,7 +235,8 @@ def inputs(eval_data, data_dir, batch_size):
                                                          width, height)
 
   # Subtract off the mean and divide by the variance of the pixels.
-  float_image = resized_image #tf.image.per_image_whitening(resized_image)
+  #float_image = resized_image #tf.image.per_image_whitening(resized_image)
+  float_image = tf.image.per_image_whitening(resized_image)
 
   # Ensure that the random shuffling has good mixing properties.
   min_fraction_of_examples_in_queue = 0.4
