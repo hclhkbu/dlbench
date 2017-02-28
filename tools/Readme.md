@@ -6,6 +6,7 @@
 -  Please create a readme file in your tool's directory including details about tool setup, data preparation, dependencies and environment etc.   
 ## \<Your tool name>bm.py explained
 ### Input options
+
 | Input Argument |                                               Details                                              |                   Default value                  |
 |:--------------:|:--------------------------------------------------------------------------------------------------:|:------------------------------------------------:|
 |      -log      | Name of log file                                                                                   | You may set your own default value for debugging |
@@ -25,10 +26,10 @@
 ```
 -t $totalTimeInSecond -a $averageMiniBatchTimeInSecond -I $lossValueOfEachEpoch
 ```
-Example of *$lossValueOfEachEpoch* (There are 4 epoch items, and splitted by `,`, and 3 values in each item splitted by `:` represents epoch number, accuracy and cross entropy respectively.):
-`
+Example of *$lossValueOfEachEpoch* (There are 4 epochs' item, and splitted by `,`, and 3 values in each item splitted by `:` represents epoch number, accuracy and cross entropy respectively.):
+```
 0:-:2.32620807,1:-:2.49505453,2:-:2.30122152,3:-:2.30028142
-`
+```
 ###Benchmark procedure
 #### 1. Build cmd.
 - In order to make this framework be competible with different types of deep learinig tools written in different languages, <tool>bm.py is only an interface that standardize the input and output. You need to use arguments above to determine the variable cmd, and it will be executed in a subshell by calling `os.system(cmd)` during which a log file must be genrated containing necessary information for post processing. Some tools will generate a log file automatically, if not redirect all stdout and stderr to the log file. The name of log file ends with ".log". Here are some examples of cmd:   
