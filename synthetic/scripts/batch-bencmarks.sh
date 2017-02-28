@@ -21,6 +21,7 @@
 #minibatch=64    iterations=8    epochs=4    device_id=0     network_name=resnet     ./cnn-benchmarks.sh
 
 # GPU-1 RetNet 
+sleep 1200
 minibatch=8     iterations=8    epochs=4    device_id=1     network_name=resnet     ./cnn-benchmarks.sh
 minibatch=16    iterations=8    epochs=4    device_id=1     network_name=resnet     ./cnn-benchmarks.sh
 minibatch=32    iterations=8    epochs=4    device_id=1     network_name=resnet     ./cnn-benchmarks.sh

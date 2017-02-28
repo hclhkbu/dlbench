@@ -25,6 +25,14 @@ if args.debug is True: print(args)
 
 # Build cmd for benchmark
 cmd = ''
+batchSize = 0
+if args.devId is -1: #run on CPU
+	batchSize = args.batchSize
+	pass
+else:
+	batchSize = args.batchSize*args.gpuCount
+	pass
+
 
 
 # Execute cmd 
@@ -35,16 +43,16 @@ t = time.time() - t
 if args.debug is True: print("Time diff: " + str(t))
 
 
-#Save log file
+#Post processing
 logPath = '' 
-with open(logPath, "a") as logFile:
-    logFile.write("Total time: " + str(t) + "\n")
-    logFile.write("cmd: " + cmd + "\n")
-os.system("cp " + logPath + " ../../logs")
 
-
-# Parse log file and extract benchmark info
 avgBatch = (avgEpoch/int(numSamples))*float(batchSize)
 if args.debug is True: print("Avg Batch: " + str(avgBatch))
 info = ''
 print "-t " + str(t) + " -a " + str(avgBatch) + " -I " + info
+
+#Save log file
+with open(logPath, "a") as logFile:
+    logFile.write("Total time: " + str(t) + "\n")
+    logFile.write("cmd: " + cmd + "\n")
+os.system("cp " + logPath + " ../../logs")
