@@ -4,8 +4,10 @@
 -  Make sure \<your tool name>bm.py will take all those parameters pre-defined, you may ignore some of them as long as your scripts work. \<your tool name>bm.py servers as an entry and will be invoked by ../benchmark.py who only cares input parameters and output results of \<your tool name>bm.py.
 -  All tests in common/testbm.sh should be passed before put new tools into use
 -  Please create a readme file in your tool's directory including details about tool setup, data preparation, dependencies and environment etc.   
-## \<Your tool name>bm.py explained
-### Input options
+
+## \<Your tool name>bm.py explained   
+
+### Input options   
 
 | Input Argument |                                               Details                                              |                   Default value                  |
 |:--------------:|:--------------------------------------------------------------------------------------------------:|:------------------------------------------------:|
