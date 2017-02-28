@@ -35,8 +35,11 @@ Example of *$lossValueOfEachEpoch* (There are 4 epochs' item, and splitted by `,
 ###Benchmark procedure    
 #### 1. Build cmd.   
 - In order to make this framework be competible with different types of deep learinig tools written in different languages, <tool>bm.py is only an interface that standardize the input and output. You need to use arguments above to determine the variable cmd, and it will be executed in a subshell by calling `os.system(cmd)` during which a log file must be genrated containing necessary information for post processing. Some tools will generate a log file automatically, if not redirect all stdout and stderr to the log file. The name of log file ends with ".log". Here are some examples of cmd:   
-Caffe: `caffe train -solver=fcn5-b1024-GPU-solver1.prototxt -gpu=0 >& /root/dlbench/tools/caffe/fc/debug.log`
+
+Caffe: `caffe train -solver=fcn5-b1024-GPU-solver1.prototxt -gpu=0 >& /root/dlbench/tools/caffe/fc/debug.log`   
+
 Mxnet: `cd fc; python train_mnist.py --lr 0.05 --batch-size 4096 --num-epochs 40 --num-examples 60000 --gpus 1 --kv-store device >& mxnet_debug.log`
+
 Torch: `THC_CACHING_ALLOCATOR=1 CUDA_VISIBLE_DEVICES=1 THC_CACHING_ALLOCATOR=1 th Main.lua -LR 0.05 -dataset MNIST -network ffn5 -batchSize 342 -epoch 40 -logfile torch_debug.log -save torch_debug.log`    
 
 #### 2. Execute cmd    
