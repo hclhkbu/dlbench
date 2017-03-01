@@ -23,6 +23,8 @@
 |       -lr      | Learning rate                                                                                      | None                                             |
 |    -netType    | Network type, values can be [fc / cnn / rnn]                                                       | None                                             |
 |     -debug     | Boolean value, true for debugging this script.                                                     | False                                            |
+\*If host file is not none, training process will run on multiple nodes as defined in the host file. Some tools have to run extra code in order to initiate multi-machine training environment. This parameter is also used to determin whether to launch extra code or not.   
+
 ###Output
 -  \<your tool name>bm.py should print out the running result which will be taken by benchmark.py and post to the server, and the format of the result is:
 ```
