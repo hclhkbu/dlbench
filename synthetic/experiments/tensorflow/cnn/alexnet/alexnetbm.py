@@ -102,11 +102,11 @@ def loss(logits, labels):
     batch_size = tf.size(labels)
     labels = tf.expand_dims(labels, 1)
     indices = tf.expand_dims(tf.range(0, batch_size, 1), 1)
-    concated = tf.concat(1, [indices, labels])
+    concated = tf.concat(axis=1, values=[indices, labels])
     onehot_labels = tf.sparse_to_dense(
-        concated, tf.pack([batch_size, 1000]), 1.0, 0.0)
-    cross_entropy = tf.nn.softmax_cross_entropy_with_logits(logits,
-                                                            onehot_labels,
+        concated, tf.stack([batch_size, 1000]), 1.0, 0.0)
+    cross_entropy = tf.nn.softmax_cross_entropy_with_logits(logits=logits,
+                                                            labels=onehot_labels,
                                                             name='xentropy')
     loss = tf.reduce_mean(cross_entropy, name='xentropy_mean')
     return loss
@@ -184,7 +184,7 @@ def run_benchmark():
     last_layer = inference(images)
 
     # Build an initialization operation.
-    init = tf.initialize_all_variables()
+    init = tf.global_variables_initializer()
 
     # Start running operations on the Graph.
     sess = tf.Session(config=config)

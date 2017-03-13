@@ -1,0 +1,78 @@
+--------------------------------------------------------------------------------
+Processing file 'alexnet_cifar10_multi_gpu.py'
+ outputting to 'alexnet_cifar10_multi_gpu1.py'
+--------------------------------------------------------------------------------
+
+'alexnet_cifar10_multi_gpu.py' Line 201
+--------------------------------------------------------------------------------
+
+Added keyword 'concat_dim' to reordered function 'tf.concat'
+Added keyword 'values' to reordered function 'tf.concat'
+
+    Old:         grad = tf.concat(0, grads)
+                                            
+    New:         grad = tf.concat(axis=0, values=grads)
+                                  ~~~~~   ~~~~~~~       
+
+'alexnet_cifar10_multi_gpu.py' Line 274
+--------------------------------------------------------------------------------
+
+Renamed function 'tf.all_variables' to 'tf.global_variables'
+
+    Old:         saver = tf.train.Saver(tf.all_variables())
+                                        ~~~~~~~~~~~~~~~~    
+    New:         saver = tf.train.Saver(tf.global_variables())
+                                        ~~~~~~~~~~~~~~~~~~~    
+
+'alexnet_cifar10_multi_gpu.py' Line 142
+--------------------------------------------------------------------------------
+
+Added keyword 'concat_dim' to reordered function 'tf.concat'
+Added keyword 'values' to reordered function 'tf.concat'
+
+    Old:     concated = tf.concat(1, [indices, labels])
+                                                        
+    New:     concated = tf.concat(axis=1, values=[indices, labels])
+                                  ~~~~~   ~~~~~~~                   
+
+'alexnet_cifar10_multi_gpu.py' Line 144
+--------------------------------------------------------------------------------
+
+Renamed function 'tf.pack' to 'tf.stack'
+
+    Old:         concated, tf.pack([batch_size, 10]), 1.0, 0.0)
+                           ~~~~~~~                              
+    New:         concated, tf.stack([batch_size, 10]), 1.0, 0.0)
+                           ~~~~~~~~                              
+
+'alexnet_cifar10_multi_gpu.py' Line 145
+--------------------------------------------------------------------------------
+
+Added keyword 'logits' to reordered function 'tf.nn.softmax_cross_entropy_with_logits'
+
+    Old:     cross_entropy = tf.nn.softmax_cross_entropy_with_logits(logits,
+                                                                             
+    New:     cross_entropy = tf.nn.softmax_cross_entropy_with_logits(logits=logits,
+                                                                     ~~~~~~~        
+
+'alexnet_cifar10_multi_gpu.py' Line 146
+--------------------------------------------------------------------------------
+
+Added keyword 'labels' to reordered function 'tf.nn.softmax_cross_entropy_with_logits'
+
+    Old:                                                             onehot_labels,
+                                                                                    
+    New:                                                             labels=onehot_labels,
+                                                                     ~~~~~~~               
+
+'alexnet_cifar10_multi_gpu.py' Line 276
+--------------------------------------------------------------------------------
+
+Renamed function 'tf.initialize_all_variables' to 'tf.global_variables_initializer'
+
+    Old:         init = tf.initialize_all_variables()
+                        ~~~~~~~~~~~~~~~~~~~~~~~~~~~   
+    New:         init = tf.global_variables_initializer()
+                        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~   
+
+

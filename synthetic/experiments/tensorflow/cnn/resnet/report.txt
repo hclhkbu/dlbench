@@ -1,0 +1,106 @@
+--------------------------------------------------------------------------------
+Processing file 'resnet_train.py'
+ outputting to 'resnet_train1.py'
+--------------------------------------------------------------------------------
+
+'resnet_train.py' Line 69
+--------------------------------------------------------------------------------
+
+Renamed function 'tf.all_variables' to 'tf.global_variables'
+
+    Old:         saver = tf.train.Saver(tf.all_variables())
+                                        ~~~~~~~~~~~~~~~~    
+    New:         saver = tf.train.Saver(tf.global_variables())
+                                        ~~~~~~~~~~~~~~~~~~~    
+
+'resnet_train.py' Line 71
+--------------------------------------------------------------------------------
+
+Renamed function 'tf.merge_all_summaries' to 'tf.summary.merge_all'
+
+    Old:         summary_op = tf.merge_all_summaries()
+                              ~~~~~~~~~~~~~~~~~~~~~~   
+    New:         summary_op = tf.summary.merge_all()
+                              ~~~~~~~~~~~~~~~~~~~~   
+
+'resnet_train.py' Line 41
+--------------------------------------------------------------------------------
+
+Renamed function 'tf.scalar_summary' to 'tf.summary.scalar'
+
+    Old:         tf.scalar_summary('loss_avg', ema.average(loss_))
+                 ~~~~~~~~~~~~~~~~~                                 
+    New:         tf.summary.scalar('loss_avg', ema.average(loss_))
+                 ~~~~~~~~~~~~~~~~~                                 
+
+'resnet_train.py' Line 47
+--------------------------------------------------------------------------------
+
+Renamed function 'tf.scalar_summary' to 'tf.summary.scalar'
+
+    Old:         tf.scalar_summary('val_top1_error_avg', top1_error_avg)
+                 ~~~~~~~~~~~~~~~~~                                       
+    New:         tf.summary.scalar('val_top1_error_avg', top1_error_avg)
+                 ~~~~~~~~~~~~~~~~~                                       
+
+'resnet_train.py' Line 49
+--------------------------------------------------------------------------------
+
+Renamed function 'tf.scalar_summary' to 'tf.summary.scalar'
+
+    Old:         tf.scalar_summary('learning_rate', FLAGS.learning_rate)
+                 ~~~~~~~~~~~~~~~~~                                       
+    New:         tf.summary.scalar('learning_rate', FLAGS.learning_rate)
+                 ~~~~~~~~~~~~~~~~~                                       
+
+'resnet_train.py' Line 73
+--------------------------------------------------------------------------------
+
+Renamed function 'tf.initialize_all_variables' to 'tf.global_variables_initializer'
+
+    Old:         init = tf.initialize_all_variables()
+                        ~~~~~~~~~~~~~~~~~~~~~~~~~~~   
+    New:         init = tf.global_variables_initializer()
+                        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~   
+
+'resnet_train.py' Line 55
+--------------------------------------------------------------------------------
+
+Renamed function 'tf.histogram_summary' to 'tf.summary.histogram'
+
+    Old:                 tf.histogram_summary(var.op.name + '/gradients', grad)
+                         ~~~~~~~~~~~~~~~~~~~~                                   
+    New:                 tf.summary.histogram(var.op.name + '/gradients', grad)
+                         ~~~~~~~~~~~~~~~~~~~~                                   
+
+'resnet_train.py' Line 79
+--------------------------------------------------------------------------------
+
+Renamed function 'tf.train.SummaryWriter' to 'tf.summary.FileWriter'
+
+    Old:         summary_writer = tf.train.SummaryWriter(FLAGS.train_dir, sess.graph)
+                                  ~~~~~~~~~~~~~~~~~~~~~~                              
+    New:         summary_writer = tf.summary.FileWriter(FLAGS.train_dir, sess.graph)
+                                  ~~~~~~~~~~~~~~~~~~~~~                              
+
+'resnet_train.py' Line 60
+--------------------------------------------------------------------------------
+
+Renamed function 'tf.image_summary' to 'tf.summary.image'
+
+    Old:             tf.image_summary('images', images)
+                     ~~~~~~~~~~~~~~~~                   
+    New:             tf.summary.image('images', images)
+                     ~~~~~~~~~~~~~~~~                   
+
+'resnet_train.py' Line 63
+--------------------------------------------------------------------------------
+
+Renamed function 'tf.histogram_summary' to 'tf.summary.histogram'
+
+    Old:                 tf.histogram_summary(var.op.name, var)
+                         ~~~~~~~~~~~~~~~~~~~~                   
+    New:                 tf.summary.histogram(var.op.name, var)
+                         ~~~~~~~~~~~~~~~~~~~~                   
+
+

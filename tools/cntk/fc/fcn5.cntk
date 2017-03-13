@@ -1,7 +1,7 @@
 WorkDir= "."
 ConfigDir= "."
 ModelDir=$WorkDir$/Output
-DataDir=/home/ipdps/data/cntk/mnist
+DataDir=/home/comp/csshshi/data/cntk/mnist
 #DataDir=/home/comp/pengfeixu/Data/cntk/mnist
 #ndlMacros = "$ConfigDir$/Macros.ndl"
 precision=float

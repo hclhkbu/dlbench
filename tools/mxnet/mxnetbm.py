@@ -28,6 +28,7 @@ if args.debug: print( "args: " + str(args))
 # Set system variable
 os.environ['OMP_NUM_THREADS'] = args.cpuCount 
 os.environ['OPENBLAS_NUM_THREADS'] = args.cpuCount 
+os.environ['MKL_NUM_THREADS'] = args.cpuCount 
 
 # Build cmd
 exePath = ""

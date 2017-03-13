@@ -2,8 +2,8 @@ RootDir = "."
 
 ConfigDir = "$RootDir$"
 #DataDir = "$RootDir$"
-#DataDir=/home/comp/csshshi/data/cntk
-DataDir=/home/ipdps/data/cntk/synthetic
+DataDir=/home/comp/csshshi/data/cntk
+#DataDir=/home/ipdps/data/cntk/synthetic
 OutputDir = "$RootDir$/Output"
 ModelDir = "$OutputDir$/Models"
 

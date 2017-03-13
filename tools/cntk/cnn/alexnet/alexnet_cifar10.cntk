@@ -1,7 +1,7 @@
 WorkDir=.
 OutputDir = "$WorkDir$/Output"
 ModelDir = "$OutputDir$/Models"
-DataDir = "/home/ipdps/data/cntk/cifar10"
+DataDir = "/home/comp/csshshi/data/cntk/cifar10"
 #DataDir = "/home/comp/pengfeixu/Data/cntk/cifar10"
 
 precision=float

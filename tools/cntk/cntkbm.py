@@ -26,6 +26,7 @@ args = parser.parse_args()
 # Set system variable
 os.environ['OMP_NUM_THREADS'] = args.cpuCount 
 os.environ['OPENBLAS_NUM_THREADS'] = args.cpuCount 
+os.environ['MKL_NUM_THREADS'] = args.cpuCount 
 
 # Build cmd for benchmark
 root_path = os.path.dirname(os.path.abspath(__file__))
