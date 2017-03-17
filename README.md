@@ -1,5 +1,13 @@
 # Deep learning software tools benchmark
-A benchmark framework for measuring different deep learning tools. Please refer to http://dlbench.comp.hkbu.edu.hk/ for our testing results and more details.
+A benchmark framework for measuring different deep learning tools. Please refer to http://dlbench.comp.hkbu.edu.hk/ for our testing results and more details. Benchmarking with newer versions of frameworks is on the way:
+
+| Tool        | Version                                      									|
+|-------------|-----------------------------------------------------------------------|
+| Caffe       | [1.0rc5(39f28e4)](https://github.com/BVLC/caffe/tree/39f28e4)         |
+| CNTK	      | [2.0Beta10(1ae666d)](https://github.com/Microsoft/CNTK/tree/1ae666d)  |
+| MXNet       | [0.93(32dc3a2)](https://github.com/dmlc/mxnet/tree/32dc3a2)           |
+| TensorFlow  | [1.0(4ac9c09)](https://github.com/tensorflow/tensorflow/tree/4ac9c09) |
+| Torch       | [7(748f5e3))](https://github.com/torch/torch7/tree/ac3751c) 	        |
 
 ## Introduction
 ### Overview of **dlbench**    
