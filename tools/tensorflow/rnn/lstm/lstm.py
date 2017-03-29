@@ -98,11 +98,12 @@ class PTBModel(object):
     # Slightly better results can be obtained with forget gate biases
     # initialized to 1 but the hyperparameters of the model would need to be
     # different than reported in the paper.
-    lstm_cell = tf.nn.rnn_cell.BasicLSTMCell(size, forget_bias=0.0)
+    #lstm_cell = tf.nn.rnn_cell.BasicLSTMCell(size, forget_bias=0.0)
+    lstm_cell = tf.contrib.rnn.BasicLSTMCell(size, forget_bias=0.0)
     if is_training and config.keep_prob < 1:
       lstm_cell = tf.nn.rnn_cell.DropoutWrapper(
           lstm_cell, output_keep_prob=config.keep_prob)
-    cell = tf.nn.rnn_cell.MultiRNNCell([lstm_cell] * config.num_layers)
+    cell = tf.contrib.rnn.MultiRNNCell([lstm_cell] * config.num_layers)
     
     # print config
     print("batch_size: ", config.batch_size)
@@ -137,11 +138,12 @@ class PTBModel(object):
         (cell_output, state) = cell(inputs[:, time_step, :], state)
         outputs.append(cell_output)
 
-    output = tf.reshape(tf.concat(1, outputs), [-1, size])
+    output = tf.reshape(tf.concat(axis=1, values=outputs), [-1, size])
     softmax_w = tf.get_variable("softmax_w", [size, vocab_size])
     softmax_b = tf.get_variable("softmax_b", [vocab_size])
     logits = tf.matmul(output, softmax_w) + softmax_b
-    loss = tf.nn.seq2seq.sequence_loss_by_example(
+    #loss = tf.nn.seq2seq.sequence_loss_by_example(
+    loss = tf.contrib.legacy_seq2seq.sequence_loss_by_example(
         [logits],
         [tf.reshape(self._targets, [-1])],
         [tf.ones([batch_size * num_steps])])
@@ -348,7 +350,7 @@ def main(_):
        #mvalid = PTBModel(is_training=False, config=config)
        mtest = PTBModel(is_training=False, config=eval_config)
 
-    tf.initialize_all_variables().run()
+    tf.global_variables_initializer().run()
 
     total_average_batch_time = 0.0
 
