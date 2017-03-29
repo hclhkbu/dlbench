@@ -66,15 +66,16 @@ def default_gen_buckets(sentences, batch_size, the_vocab):
             tl += n
     if tl > 0:
         buckets.append(max_len)
-    print("=============Buckets: " + buckets)
     return buckets
 
 class SimpleBatch(object):
-    def __init__(self, data_names, data, label_names, label, bucket_key):
+    def __init__(self, data_names, data, data_layouts, label_names, label, label_layouts, bucket_key):
         self.data = data
         self.label = label
         self.data_names = data_names
         self.label_names = label_names
+        self.data_layouts = data_layouts
+        self.label_layouts = label_layouts
         self.bucket_key = bucket_key
 
         self.pad = 0
@@ -82,11 +83,11 @@ class SimpleBatch(object):
 
     @property
     def provide_data(self):
-        return [(n, x.shape) for n, x in zip(self.data_names, self.data)]
+        return [mx.io.DataDesc(n, x.shape, layout=l) for n, x, l in zip(self.data_names, self.data, self.data_layouts)]
 
     @property
     def provide_label(self):
-        return [(n, x.shape) for n, x in zip(self.label_names, self.label)]
+        return [mx.io.DataDesc(n, x.shape, layout=l) for n, x, l in zip(self.label_names, self.label, self.label_layouts)]
 
 class DummyIter(mx.io.DataIter):
     "A dummy iterator that always return the same batch, used for speed testing"
@@ -132,7 +133,6 @@ class BucketSentenceIter(mx.io.DataIter):
         self.data_name = data_name
         self.label_name = label_name
         self.time_major = time_major
-        self.layout_mapper = mx.io.DefaultLayoutMapper(1 if time_major else 0)
 
         buckets.sort()
         self.buckets = buckets
@@ -148,7 +148,6 @@ class BucketSentenceIter(mx.io.DataIter):
             for i, bkt in enumerate(buckets):
                 if bkt >= len(sentence):
                     self.data[i].append(sentence)
-                    #print 'sen_id: ', buckets, sentence
                     break
             # we just ignore the sentence it is longer than the maximum
             # bucket size here
@@ -160,7 +159,6 @@ class BucketSentenceIter(mx.io.DataIter):
                 sentence = self.data[i_bucket][j]
                 data[i_bucket][j, :len(sentence)] = sentence
         self.data = data
-        print '----final data: ', self.data[0]
 
         # Get the size of each bucket, so that we could sample
         # uniformly from the bucket
@@ -177,8 +175,8 @@ class BucketSentenceIter(mx.io.DataIter):
         self.init_state_arrays = [mx.nd.zeros(x[1]) for x in init_states]
 
         if self.time_major:
-            self.provide_data = [('data', (self.default_bucket_key, batch_size))] + init_states
-            self.provide_label = [('softmax_label', (self.default_bucket_key, batch_size))]
+            self.provide_data = [mx.io.DataDesc('data', (self.default_bucket_key, batch_size), layout='TN')] + init_states
+            self.provide_label = [mx.io.DataDesc('softmax_label', (self.default_bucket_key, batch_size), layout='TN')]
         else:
             self.provide_data = [('data', (batch_size, self.default_bucket_key))] + init_states
             self.provide_label = [('softmax_label', (self.batch_size, self.default_bucket_key))]
@@ -240,14 +238,14 @@ class BucketSentenceIter(mx.io.DataIter):
             data_names = ['data'] + init_state_names
             label_names = ['softmax_label']
 
-            data_batch = SimpleBatch(data_names, data_all, label_names, label_all,
+            data_batch = SimpleBatch(data_names, data_all, [x.layout for x in self.provide_data],
+                                     label_names, label_all, [x.layout for x in self.provide_label],
                                      self.buckets[i_bucket])
             yield data_batch
 
 
     def reset(self):
         self.bucket_curr_idx = [0 for x in self.data]
-
 
 class MyBucketSentenceIter(mx.io.DataIter):
 
@@ -262,12 +260,11 @@ class MyBucketSentenceIter(mx.io.DataIter):
                  time_major=True):
         super(MyBucketSentenceIter, self).__init__()
 
-        self.text2id = self.my_text2id
+	self.text2id = self.my_text2id
         if read_content == None:
             self.read_content = default_read_content
         else:
             self.read_content = read_content
-	print 'path: ', path
         content = self.read_content(path)
         #sentences = content.split(seperate_char)
 	words = content.split(' ')
@@ -285,7 +282,6 @@ class MyBucketSentenceIter(mx.io.DataIter):
         self.data_name = data_name
         self.label_name = label_name
         self.time_major = time_major
-        self.layout_mapper = mx.io.DefaultLayoutMapper(1 if time_major else 0)
 
         buckets.sort()
         self.buckets = buckets
@@ -293,7 +289,7 @@ class MyBucketSentenceIter(mx.io.DataIter):
 
         # pre-allocate with the largest bucket for better memory sharing
         self.default_bucket_key = max(buckets)
-	print 'buckets: ', buckets
+
 	number_of_word_per_sentence = buckets[0]/2
 	number_of_sentence = (len(words)+number_of_word_per_sentence-1)/number_of_word_per_sentence
 	for sentence_idx in range(number_of_sentence):
@@ -303,15 +299,24 @@ class MyBucketSentenceIter(mx.io.DataIter):
             sentence_ids = self.text2id(words[sentence_idx*number_of_word_per_sentence:end_of_current_sentence], vocab)
 	    self.data[0].append(sentence_ids)
 
+#        for sentence in sentences:
+#            sentence = self.text2id(sentence, vocab)
+#            if len(sentence) == 0:
+#                continue
+#            for i, bkt in enumerate(buckets):
+#                if bkt >= len(sentence):
+#                    self.data[i].append(sentence)
+#                    break
+#            # we just ignore the sentence it is longer than the maximum
+#            # bucket size here
+
         # convert data into ndarrays for better speed during training
         data = [np.zeros((len(x), buckets[i])) for i, x in enumerate(self.data)]
         for i_bucket in range(len(self.buckets)):
             for j in range(len(self.data[i_bucket])):
                 sentence = self.data[i_bucket][j]
-		#print sentence
                 data[i_bucket][j, :len(sentence)] = sentence
         self.data = data
-        print 'final data: ', self.data 
 
         # Get the size of each bucket, so that we could sample
         # uniformly from the bucket
@@ -328,8 +333,8 @@ class MyBucketSentenceIter(mx.io.DataIter):
         self.init_state_arrays = [mx.nd.zeros(x[1]) for x in init_states]
 
         if self.time_major:
-            self.provide_data = [('data', (self.default_bucket_key, batch_size))] + init_states
-            self.provide_label = [('softmax_label', (self.default_bucket_key, batch_size))]
+            self.provide_data = [mx.io.DataDesc('data', (self.default_bucket_key, batch_size), layout='TN')] + init_states
+            self.provide_label = [mx.io.DataDesc('softmax_label', (self.default_bucket_key, batch_size), layout='TN')]
         else:
             self.provide_data = [('data', (batch_size, self.default_bucket_key))] + init_states
             self.provide_label = [('softmax_label', (self.batch_size, self.default_bucket_key))]
@@ -391,7 +396,8 @@ class MyBucketSentenceIter(mx.io.DataIter):
             data_names = ['data'] + init_state_names
             label_names = ['softmax_label']
 
-            data_batch = SimpleBatch(data_names, data_all, label_names, label_all,
+            data_batch = SimpleBatch(data_names, data_all, [x.layout for x in self.provide_data],
+                                     label_names, label_all, [x.layout for x in self.provide_label],
                                      self.buckets[i_bucket])
             yield data_batch
 
