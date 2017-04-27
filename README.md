@@ -9,6 +9,7 @@ A benchmark framework for measuring different deep learning tools. Please refer 
 | TensorFlow  | [1.0(4ac9c09)](https://github.com/tensorflow/tensorflow/tree/4ac9c09) |
 | Torch       | [7(748f5e3))](https://github.com/torch/torch7/tree/ac3751c) 	        |
 
+This project is licensed under MIT License.
 ## Introduction
 ### Overview of **dlbench**    
 
