@@ -4,8 +4,11 @@
 -  Make sure \<your tool name>bm.py will take all those parameters pre-defined, you may ignore some of them as long as your scripts work. \<your tool name>bm.py servers as an entry and will be invoked by ../benchmark.py who only cares input parameters and output results of \<your tool name>bm.py.
 -  All tests in common/testbm.sh should be passed before put new tools into use
 -  Please create a readme file in your tool's directory including details about tool setup, data preparation, dependencies and environment etc.   
-## \<Your tool name>bm.py explained
-### Input options
+
+## \<Your tool name>bm.py explained   
+
+### Input options   
+
 | Input Argument |                                               Details                                              |                   Default value                  |
 |:--------------:|:--------------------------------------------------------------------------------------------------:|:------------------------------------------------:|
 |      -log      | Name of log file                                                                                   | You may set your own default value for debugging |
@@ -31,13 +34,19 @@ Example of *$lossValueOfEachEpoch* (There are 4 epochs' item, and splitted by `,
 ```
 ###Benchmark procedure
 #### 1. Build cmd.
+
 - In order to make this framework be competible with different types of deep learinig tools written in different languages, <tool>bm.py is only an interface that standardize the input and output. You need to use arguments above to determine the variable cmd, and it will be executed in a subshell by calling `os.system(cmd)` during which a log file must be genrated containing necessary information for post processing. Some tools will generate a log file automatically, if not redirect all stdout and stderr to the log file. The name of log file ends with ".log". Here are some examples of cmd:   
-Caffe: `caffe train -solver=fcn5-b1024-GPU-solver1.prototxt -gpu=0 >& /root/dlbench/tools/caffe/fc/debug.log`
+
+Caffe: `caffe train -solver=fcn5-b1024-GPU-solver1.prototxt -gpu=0 >& /root/dlbench/tools/caffe/fc/debug.log`   
+
 Mxnet: `cd fc; python train_mnist.py --lr 0.05 --batch-size 4096 --num-epochs 40 --num-examples 60000 --gpus 1 --kv-store device >& mxnet_debug.log`
-Torch: `THC_CACHING_ALLOCATOR=1 CUDA_VISIBLE_DEVICES=1 THC_CACHING_ALLOCATOR=1 th Main.lua -LR 0.05 -dataset MNIST -network ffn5 -batchSize 342 -epoch 40 -logfile torch_debug.log -save torch_debug.log`
-#### 2. Execute cmd
-- Normally you don't need to change anything in this part. Cmd will be executed and total running time will be measured as well.
-#### 3. Post processing
+
+Torch: `THC_CACHING_ALLOCATOR=1 CUDA_VISIBLE_DEVICES=1 THC_CACHING_ALLOCATOR=1 th Main.lua -LR 0.05 -dataset MNIST -network ffn5 -batchSize 342 -epoch 40 -logfile torch_debug.log -save torch_debug.log`    
+
+#### 2. Execute cmd    
+- Normally you don't need to change anything in this part. Cmd will be executed and total running time will be measured as well.   
+
+#### 3. Post processing    
 - There're three pieces of information need to be printed out:   
 **Total runing time** `t`: xxxbm.py handles it already   
 **Average batch time** `avgBatch`: average training time for one batch of date. Note that if there are more than one GPU, the batch size is n\*args.batchSize since the input argument args.batchSize is for each GPU core. If new tool doesn't measure the batch batch time directly, you need to convert other metrics into seconds/batch here.   
