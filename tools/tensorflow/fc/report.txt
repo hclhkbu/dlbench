@@ -1,0 +1,37 @@
+--------------------------------------------------------------------------------
+Processing file 'fcn5_mnist_multi_gpu.py'
+ outputting to 'fcn5_mnist_multi_gpu1.py'
+--------------------------------------------------------------------------------
+
+'fcn5_mnist_multi_gpu.py' Line 160
+--------------------------------------------------------------------------------
+
+Renamed function 'tf.all_variables' to 'tf.global_variables'
+
+    Old:         saver = tf.train.Saver(tf.all_variables())
+                                        ~~~~~~~~~~~~~~~~    
+    New:         saver = tf.train.Saver(tf.global_variables())
+                                        ~~~~~~~~~~~~~~~~~~~    
+
+'fcn5_mnist_multi_gpu.py' Line 162
+--------------------------------------------------------------------------------
+
+Renamed function 'tf.initialize_all_variables' to 'tf.global_variables_initializer'
+
+    Old:         init = tf.initialize_all_variables()
+                        ~~~~~~~~~~~~~~~~~~~~~~~~~~~   
+    New:         init = tf.global_variables_initializer()
+                        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~   
+
+'fcn5_mnist_multi_gpu.py' Line 85
+--------------------------------------------------------------------------------
+
+Added keyword 'concat_dim' to reordered function 'tf.concat'
+Added keyword 'values' to reordered function 'tf.concat'
+
+    Old:       grad = tf.concat(0, grads)
+                                          
+    New:       grad = tf.concat(axis=0, values=grads)
+                                ~~~~~   ~~~~~~~       
+
+

@@ -84,7 +84,7 @@ def train(model='fcn5'):
         #optimizer = tf.train.GradientDescentOptimizer(lr).minimize(loss)
         optimizer = tf.train.MomentumOptimizer(lr, 0.9).minimize(loss)
 
-        init = tf.initialize_all_variables()
+        init = tf.global_variables_initializer()
         sess.run(init)
         tf.train.start_queue_runners(sess=sess)
         batch_size_per_epoch = int((EPOCH_SIZE + FLAGS.batch_size - 1)/ FLAGS.batch_size)

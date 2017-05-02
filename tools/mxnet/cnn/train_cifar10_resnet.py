@@ -42,7 +42,7 @@ import sys
 import argparse
 import math
 import os
-os.environ["MXNET_CUDNN_AUTOTUNE_DEFAULT"] = "1"
+os.environ["MXNET_CUDNN_AUTOTUNE_DEFAULT"] = "0"
 import mxnet as mx
 import logging
 import numpy as np

@@ -1,8 +1,8 @@
 WorkDir=.
 ModelDir=$WorkDir$/Output/$ConfigName$
 #stderr=$WorkDir$/logs/$ConfigName$/out
-#DataDir=/home/comp/csshshi/data/cntk
-DataDir=/home/ipdps/data/cntk/synthetic
+DataDir=/home/comp/csshshi/data/cntk
+#DataDir=/home/ipdps/data/cntk/synthetic
 precision=float
 
 deviceId=0

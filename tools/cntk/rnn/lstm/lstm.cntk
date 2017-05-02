@@ -7,7 +7,7 @@ RootDir = "."
 ConfigDir = "$RootDir$"
 #DataDir   = "/home/comp/pengfeixu/data/cntk/ptb"
 #DataDir   = "/home/comp/csshshi/data/cntk/ptb"
-DataDir   = "/home/ipdps/data/cntk/ptb"
+DataDir   = "/home/comp/csshshi/data/cntk/ptb"
 OutputDir = "$RootDir$/Output"
 ModelDir  = "$OutputDir$/Models"
 

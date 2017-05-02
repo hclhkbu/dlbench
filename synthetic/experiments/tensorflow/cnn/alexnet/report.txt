@@ -1,0 +1,57 @@
+--------------------------------------------------------------------------------
+Processing file 'alexnetbm.py'
+ outputting to 'alexnetbm1.py'
+--------------------------------------------------------------------------------
+
+'alexnetbm.py' Line 105
+--------------------------------------------------------------------------------
+
+Added keyword 'concat_dim' to reordered function 'tf.concat'
+Added keyword 'values' to reordered function 'tf.concat'
+
+    Old:     concated = tf.concat(1, [indices, labels])
+                                                        
+    New:     concated = tf.concat(axis=1, values=[indices, labels])
+                                  ~~~~~   ~~~~~~~                   
+
+'alexnetbm.py' Line 187
+--------------------------------------------------------------------------------
+
+Renamed function 'tf.initialize_all_variables' to 'tf.global_variables_initializer'
+
+    Old:     init = tf.initialize_all_variables()
+                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~   
+    New:     init = tf.global_variables_initializer()
+                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~   
+
+'alexnetbm.py' Line 107
+--------------------------------------------------------------------------------
+
+Renamed function 'tf.pack' to 'tf.stack'
+
+    Old:         concated, tf.pack([batch_size, 1000]), 1.0, 0.0)
+                           ~~~~~~~                                
+    New:         concated, tf.stack([batch_size, 1000]), 1.0, 0.0)
+                           ~~~~~~~~                                
+
+'alexnetbm.py' Line 108
+--------------------------------------------------------------------------------
+
+Added keyword 'logits' to reordered function 'tf.nn.softmax_cross_entropy_with_logits'
+
+    Old:     cross_entropy = tf.nn.softmax_cross_entropy_with_logits(logits,
+                                                                             
+    New:     cross_entropy = tf.nn.softmax_cross_entropy_with_logits(logits=logits,
+                                                                     ~~~~~~~        
+
+'alexnetbm.py' Line 109
+--------------------------------------------------------------------------------
+
+Added keyword 'labels' to reordered function 'tf.nn.softmax_cross_entropy_with_logits'
+
+    Old:                                                             onehot_labels,
+                                                                                    
+    New:                                                             labels=onehot_labels,
+                                                                     ~~~~~~~               
+
+
