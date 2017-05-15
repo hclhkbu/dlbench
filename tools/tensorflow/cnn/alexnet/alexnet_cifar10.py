@@ -204,6 +204,8 @@ def train():
       #image_size = 32 
       #images, labels = cifar10_input.distorted_inputs(FLAGS.data_dir, FLAGS.batch_size)
       images, labels = cifar10_input.inputs(False, FLAGS.data_dir, FLAGS.batch_size)
+      with tf.device('/cpu:0'):
+        images, labels = cifar10_input.inputs(False, FLAGS.data_dir, FLAGS.batch_size)
       print('Images: ', images)
 
       logits = inference(images)

@@ -139,11 +139,11 @@ def loss_function(logits, labels):
     batch_size = tf.size(labels)
     labels = tf.expand_dims(labels, 1)
     indices = tf.expand_dims(tf.range(0, batch_size, 1), 1)
-    concated = tf.concat(1, [indices, labels])
+    concated = tf.concat(axis=1, values=[indices, labels])
     onehot_labels = tf.sparse_to_dense(
-        concated, tf.pack([batch_size, 10]), 1.0, 0.0)
-    cross_entropy = tf.nn.softmax_cross_entropy_with_logits(logits,
-                                                            onehot_labels,
+        concated, tf.stack([batch_size, 10]), 1.0, 0.0)
+    cross_entropy = tf.nn.softmax_cross_entropy_with_logits(logits=logits,
+                                                            labels=onehot_labels,
                                                             name='xentropy')
     loss = tf.reduce_mean(cross_entropy, name='xentropy_mean')
     return loss
@@ -198,7 +198,7 @@ def average_gradients(tower_grads):
             grads.append(expanded_g)
 
         # Average over the 'tower' dimension.
-        grad = tf.concat(0, grads)
+        grad = tf.concat(axis=0, values=grads)
         grad = tf.reduce_mean(grad, 0)
 
         # Keep in mind that the Variables are redundant because they are shared
@@ -243,7 +243,9 @@ def train():
             with tf.device('/gpu:%s'%device_ids[i]):
                 with tf.name_scope('%s_%s' % ('TOWER', device_ids[i])) as n_scope:
                     _init_global_variables()
-                    images, labels = cifar10_input.inputs(False, FLAGS.data_dir, FLAGS.batch_size)
+
+                    with tf.device('/cpu:0'):
+                        images, labels = cifar10_input.inputs(False, FLAGS.data_dir, FLAGS.batch_size)
                     logits = inference(images)
                     loss = loss_function(logits, labels)
 
@@ -271,9 +273,9 @@ def train():
         average_op = tf.reduce_mean(average_loss_tensor, 0)
 
         # Create a saver.
-        saver = tf.train.Saver(tf.all_variables())
+        saver = tf.train.Saver(tf.global_variables())
 
-        init = tf.initialize_all_variables()
+        init = tf.global_variables_initializer()
         sess = tf.Session(config=config)
         sess.run(init)
         coord = tf.train.Coordinator()
