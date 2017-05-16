@@ -88,7 +88,7 @@ def train():
             print('The device_ids should have the same number of GPUs with num_gpus')
             return
 
-        lr = 0.1
+        lr = 0.01
         #optimizer = tf.train.GradientDescentOptimizer(lr)
         optimizer = tf.train.MomentumOptimizer(lr, 0.9)
 
@@ -103,14 +103,17 @@ def train():
 
         tower_grads = []
         average_loss_tensor = []
+        reuse_variables = None
         for i in six.moves.range(FLAGS.num_gpus):
             print('what is i: ', i)
 
             with tf.device(assign_to_device('/gpu:%s'%device_ids[i])):
                 with tf.name_scope('%s_%s' % ('TOWER', device_ids[i])) as n_scope:
-                    images, labels = cifar10_input.inputs(False, FLAGS.data_dir, FLAGS.batch_size)
+                    with tf.device('/cpu:0'):
+                        images, labels = cifar10_input.inputs(False, FLAGS.data_dir, FLAGS.batch_size)
                     #logits = inference(images, is_training=True)
-                    logits = inference_small(images, is_training=True, num_blocks=9)
+                    with tf.variable_scope(tf.get_variable_scope(), reuse=reuse_variables):
+                        logits = inference_small(images, is_training=True, num_blocks=9)
                     loss_tensor = loss(logits, labels)
                     tf.add_to_collection('losses', loss_tensor)
                     tf.add_n(tf.get_collection('losses'), name='total_loss')
@@ -118,11 +121,12 @@ def train():
                     losses = tf.get_collection('losses', n_scope)
                     total_loss = tf.add_n(losses, name='total_loss')
                     average_loss_tensor.append(total_loss)
-
-                    #tf.get_variable_scope().reuse_variables()
-                    grads = optimizer.compute_gradients(total_loss)
-
+                    update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
+                    with tf.control_dependencies(update_ops):
+                        #tf.get_variable_scope().reuse_variables()
+                        grads = optimizer.compute_gradients(total_loss)
                     tower_grads.append(grads)
+                    reuse_variables = True
         grads = average_gradients(tower_grads)
         apply_gradient_op = optimizer.apply_gradients(grads, global_step=global_step)
         train_op = apply_gradient_op
@@ -176,6 +180,7 @@ def train():
 
 
 def main(_):
+    os.environ['TF_ENABLE_WINOGRAD_NONFUSED'] = '1'
     train()
 
 
