@@ -104,6 +104,7 @@ def train():
         tower_grads = []
         average_loss_tensor = []
         reuse_variables = None
+        losses = []
         for i in six.moves.range(FLAGS.num_gpus):
             print('what is i: ', i)
 
@@ -114,23 +115,36 @@ def train():
                     #logits = inference(images, is_training=True)
                     with tf.variable_scope(tf.get_variable_scope(), reuse=reuse_variables):
                         logits = inference_small(images, is_training=True, num_blocks=9)
-                    loss_tensor = loss(logits, labels)
-                    tf.add_to_collection('losses', loss_tensor)
-                    tf.add_n(tf.get_collection('losses'), name='total_loss')
+                        loss_tensor = loss(logits, labels)
+                        losses.append(loss_tensor)
+                    #tf.add_to_collection('losses', loss_tensor)
+                    #tf.add_n(tf.get_collection('losses'), name='total_loss')
 
-                    losses = tf.get_collection('losses', n_scope)
-                    total_loss = tf.add_n(losses, name='total_loss')
-                    average_loss_tensor.append(total_loss)
-                    update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
-                    with tf.control_dependencies(update_ops):
-                        #tf.get_variable_scope().reuse_variables()
-                        grads = optimizer.compute_gradients(total_loss)
+                    #losses = tf.get_collection('losses', n_scope)
+                    #total_loss = tf.add_n(losses, name='total_loss')
+                    # average_loss_tensor.append(loss_tensor)
+                    
+                    #update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
+                    #with tf.control_dependencies(update_ops):
+                    grads = optimizer.compute_gradients(loss_tensor)
                     tower_grads.append(grads)
                     reuse_variables = True
-        grads = average_gradients(tower_grads)
-        apply_gradient_op = optimizer.apply_gradients(grads, global_step=global_step)
+        
+        total_loss = tf.add_n(losses, name='total_loss')
+        update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS, 'TOWER_0')
+        
+        with tf.control_dependencies(update_ops):
+            grads = average_gradients(tower_grads)
+            apply_gradient_op = optimizer.apply_gradients(grads, global_step=global_step)
         train_op = apply_gradient_op
-        average_op = tf.reduce_mean(average_loss_tensor, 0)
+
+        #update_ops.append(apply_gradient_op)
+
+        #update_op = tf.group(*update_ops)
+        #train_op = control_flow_ops.with_dependencies([update_op], total_loss,
+        #                                              name='train_op')
+
+        # average_op = tf.reduce_mean(average_loss_tensor, 0)
 
         # Create a saver.
         saver = tf.train.Saver(tf.global_variables())
@@ -154,7 +168,7 @@ def train():
         for step in six.moves.xrange(iterations):
             start_time = time.time()
             #_, loss_v = sess.run([train_op, total_loss])
-            _, loss_v = sess.run([train_op, average_op])
+            _, loss_v = sess.run([train_op, total_loss])
             duration = time.time() - start_time
             average_loss += loss_v
             average_batch_time += float(duration)
