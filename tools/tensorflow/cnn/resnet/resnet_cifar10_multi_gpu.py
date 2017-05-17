@@ -28,6 +28,7 @@ tf.app.flags.DEFINE_boolean('use_fp16', False,
 tf.app.flags.DEFINE_boolean('log_device_placement', False,
                             """Whether to log device placement.""")
 tf.app.flags.DEFINE_integer('num_gpus', 2, """How many GPUs to use.""")
+tf.app.flags.DEFINE_string('local_ps_device', 'GPU:0', """Local parameter server GPU:0 if gpus are peered or CPU:0 otherwise try both.""")
 
 EPOCH_SIZE = 50000
 TEST_SIZE = 10000
@@ -75,7 +76,7 @@ def train():
     global parameters
     config = tf.ConfigProto(allow_soft_placement=True, log_device_placement=FLAGS.log_device_placement)
 
-    with tf.Graph().as_default(), tf.device("/cpu:0"):
+    with tf.Graph().as_default(), tf.device("/" + FLAGS.local_ps_device):
         global_step = tf.get_variable('global_step', [], initializer=tf.constant_initializer(0), trainable=False)
 
         device_ids = FLAGS.device_ids
@@ -92,7 +93,7 @@ def train():
         #optimizer = tf.train.GradientDescentOptimizer(lr)
         optimizer = tf.train.MomentumOptimizer(lr, 0.9)
 
-        def assign_to_device(device, ps_device="/cpu:0"):
+        def assign_to_device(device, ps_device="/" + FLAGS.local_ps_device):
             #if FLAGS.num_gpus == 1:
             #    ps_device="/gpu:0"
             def _assign(op):
