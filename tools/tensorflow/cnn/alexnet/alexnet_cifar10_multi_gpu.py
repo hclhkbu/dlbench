@@ -315,6 +315,7 @@ def train():
 
 
 def main(_):
+    os.environ['TF_ENABLE_WINOGRAD_NONFUSED'] = '1'
     train()
 
 
