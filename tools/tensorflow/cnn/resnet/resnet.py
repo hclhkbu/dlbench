@@ -87,11 +87,9 @@ def loss(logits, labels):
     cross_entropy_mean = tf.reduce_mean(cross_entropy)
  
     regularization_losses = tf.get_collection(tf.GraphKeys.REGULARIZATION_LOSSES)
-
-    loss_ = tf.add_n([cross_entropy_mean] + regularization_losses)
-    tf.summary.scalar('loss', loss_)
-
-    return loss_
+    total_loss = tf.add_n([cross_entropy_mean] + regularization_losses, name='total_loss')
+    
+    return total_loss
 
 
 def stack(x, c):
