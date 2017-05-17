@@ -28,7 +28,9 @@ tf.app.flags.DEFINE_boolean('use_fp16', False,
 tf.app.flags.DEFINE_boolean('log_device_placement', False,
                             """Whether to log device placement.""")
 tf.app.flags.DEFINE_integer('num_gpus', 2, """How many GPUs to use.""")
-tf.app.flags.DEFINE_string('local_ps_device', 'GPU:0', """Local parameter server GPU:0 if gpus are peered or CPU:0 otherwise try both.""")
+# CPU:0 is best for ResNet regardless of peering.  I do not know about CIFAR on P100 but even 
+# on the P100 via the DGX-1 CPU is the better choice.  
+tf.app.flags.DEFINE_string('local_ps_device', 'CPU:0', """Local parameter server GPU:0 if gpus are peered or CPU:0 otherwise try both.""")
 
 EPOCH_SIZE = 50000
 TEST_SIZE = 10000
