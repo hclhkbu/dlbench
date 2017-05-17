@@ -25,7 +25,7 @@ tf.app.flags.DEFINE_integer('batch_size', 1024, """Number of images to process i
 tf.app.flags.DEFINE_integer('epochs', 40, """Max epochs for training.""")
 tf.app.flags.DEFINE_integer('log_step', 100, """Log step""")
 tf.app.flags.DEFINE_integer('eval_step', 1, """Evaluate step of epoch""")
-tf.app.flags.DEFINE_string('device_ids', '0,1', """Device ids. split by comma, e.g. 0,1""")
+tf.app.flags.DEFINE_string('device_ids', '', """Device ids. split by comma, e.g. 0,1""")
 #tf.app.flags.DEFINE_string('data_dir', '/home/comp/csshshi/data/tensorflow/cifar10/cifar-10-batches-bin', """Data directory""")
 tf.app.flags.DEFINE_string('data_dir', os.environ['HOME']+'/data/tensorflow/cifar10/cifar-10-batches-bin', """Data directory""")
 #tf.app.flags.DEFINE_string('data_dir', '/home/comp/pengfeixu/Data/tensorflow/cifar10/cifar-10-batches-bin', """Data directory""")
@@ -216,7 +216,12 @@ def train():
     with tf.Graph().as_default(), tf.device("/cpu:0"):
         global_step = tf.get_variable('global_step', [], initializer=tf.constant_initializer(0), trainable=False)
 
-        device_ids = FLAGS.device_ids.split(',')
+        device_ids = FLAGS.device_ids
+        if not device_ids:
+            device_ids = [str(i) for i in range(FLAGS.num_gpus)]
+        else:
+            device_ids = device_ids.split(',')
+
         print('device_ids: ', device_ids)
         if len(device_ids) > FLAGS.num_gpus:
             print('The device_ids should have the same number of GPUs with num_gpus')
