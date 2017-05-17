@@ -222,7 +222,7 @@ def train():
             print('The device_ids should have the same number of GPUs with num_gpus')
             return
 
-        lr = 0.001
+        lr = 0.0009
         #optimizer = tf.train.GradientDescentOptimizer(lr)
         optimizer = tf.train.MomentumOptimizer(lr, 0.9)
 
@@ -237,35 +237,22 @@ def train():
 
         tower_grads = []
         average_loss_tensor = []
+        reuse_variables = False
         for i in xrange(FLAGS.num_gpus):
             print('what is i: ', i)
-            #with tf.device(assign_to_device('/gpu:%s'%device_ids[i])):
             with tf.device('/gpu:%s'%device_ids[i]):
                 with tf.name_scope('%s_%s' % ('TOWER', device_ids[i])) as n_scope:
                     _init_global_variables()
-
                     with tf.device('/cpu:0'):
                         images, labels = cifar10_input.inputs(False, FLAGS.data_dir, FLAGS.batch_size)
-                    logits = inference(images)
+                    with tf.variable_scope(tf.get_variable_scope(), reuse=reuse_variables):    
+                        logits = inference(images)
                     loss = loss_function(logits, labels)
+                    reuse_variables = True
 
-                    tf.add_to_collection('losses', loss)
-                    tf.add_n(tf.get_collection('losses'), name='total_loss')
-
-                    losses = tf.get_collection('losses', n_scope)
-                    total_loss = tf.add_n(losses, name='total_loss')
-                    average_loss_tensor.append(total_loss)
-
-                    tf.get_variable_scope().reuse_variables()
-                    print('total_loss: ', total_loss)
-                    grads = optimizer.compute_gradients(total_loss)
-                    print('grads: ', grads)
-
+                    average_loss_tensor.append(loss)
+                    grads = optimizer.compute_gradients(loss)
                     tower_grads.append(grads)
-
-        print('tower_grads: ', tower_grads)
-        print('len0: ', len(tower_grads[0]))
-        print('len1: ', len(tower_grads[1]))
 
         grads = average_gradients(tower_grads)
         apply_gradient_op = optimizer.apply_gradients(grads, global_step=global_step)
