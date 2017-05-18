@@ -38,7 +38,6 @@ tf.app.flags.DEFINE_boolean('log_device_placement', True,
 tf.app.flags.DEFINE_integer('num_gpus', 2, """How many GPUs to use.""")
 tf.app.flags.DEFINE_string('local_ps_device', 'GPU:0', """Local parameter server GPU:0 if gpus are peered or CPU:0 otherwise try both.""")
 
-
 EPOCH_SIZE = 50000
 TEST_SIZE = 10000
 
@@ -229,7 +228,7 @@ def train():
             print('The device_ids should have the same number of GPUs with num_gpus')
             return
 
-        lr = 0.0009
+        lr = 0.001
         #optimizer = tf.train.GradientDescentOptimizer(lr)
         optimizer = tf.train.MomentumOptimizer(lr, 0.9)
 
