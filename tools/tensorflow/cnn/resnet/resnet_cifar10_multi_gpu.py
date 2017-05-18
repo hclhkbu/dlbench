@@ -28,6 +28,9 @@ tf.app.flags.DEFINE_boolean('use_fp16', False,
 tf.app.flags.DEFINE_boolean('log_device_placement', False,
                             """Whether to log device placement.""")
 tf.app.flags.DEFINE_integer('num_gpus', 2, """How many GPUs to use.""")
+# CPU:0 is best for ResNet regardless of peering.  I do not know about CIFAR on P100 but even 
+# on the P100 via the DGX-1 CPU is the better choice.  
+tf.app.flags.DEFINE_string('local_ps_device', 'CPU:0', """Local parameter server GPU:0 if gpus are peered or CPU:0 otherwise try both.""")
 
 EPOCH_SIZE = 50000
 TEST_SIZE = 10000
@@ -75,7 +78,7 @@ def train():
     global parameters
     config = tf.ConfigProto(allow_soft_placement=True, log_device_placement=FLAGS.log_device_placement)
 
-    with tf.Graph().as_default(), tf.device("/cpu:0"):
+    with tf.Graph().as_default(), tf.device("/" + FLAGS.local_ps_device):
         global_step = tf.get_variable('global_step', [], initializer=tf.constant_initializer(0), trainable=False)
 
         device_ids = FLAGS.device_ids
@@ -88,45 +91,48 @@ def train():
             print('The device_ids should have the same number of GPUs with num_gpus')
             return
 
-        lr = 0.1
+        lr = 0.01
         #optimizer = tf.train.GradientDescentOptimizer(lr)
         optimizer = tf.train.MomentumOptimizer(lr, 0.9)
 
-        def assign_to_device(device, ps_device="/cpu:0"):
+        def assign_to_device(device, ps_device="/" + FLAGS.local_ps_device):
+            #if FLAGS.num_gpus == 1:
+            #    ps_device="/gpu:0"
             def _assign(op):
                 node_def = op if isinstance(op, tf.NodeDef) else op.node_def
-                if node_def.op == "Variable":
+                if node_def.op in ["Variable","VariableV2"]:
                     return ps_device
                 else:
                     return device
             return _assign
 
         tower_grads = []
-        average_loss_tensor = []
+        reuse_variables = None
+        losses = []
         for i in six.moves.range(FLAGS.num_gpus):
             print('what is i: ', i)
 
             with tf.device(assign_to_device('/gpu:%s'%device_ids[i])):
                 with tf.name_scope('%s_%s' % ('TOWER', device_ids[i])) as n_scope:
-                    images, labels = cifar10_input.inputs(False, FLAGS.data_dir, FLAGS.batch_size)
+                    with tf.device('/cpu:0'):
+                        images, labels = cifar10_input.inputs(False, FLAGS.data_dir, FLAGS.batch_size)
                     #logits = inference(images, is_training=True)
-                    logits = inference_small(images, is_training=True, num_blocks=9)
-                    loss_tensor = loss(logits, labels)
-                    tf.add_to_collection('losses', loss_tensor)
-                    tf.add_n(tf.get_collection('losses'), name='total_loss')
-
-                    losses = tf.get_collection('losses', n_scope)
-                    total_loss = tf.add_n(losses, name='total_loss')
-                    average_loss_tensor.append(total_loss)
-
-                    #tf.get_variable_scope().reuse_variables()
-                    grads = optimizer.compute_gradients(total_loss)
-
+                    with tf.variable_scope(tf.get_variable_scope(), reuse=reuse_variables):
+                        logits = inference_small(images, is_training=True, num_blocks=9)
+                    tower_loss = loss(logits, labels)
+                    losses.append(tower_loss)
+                    grads = optimizer.compute_gradients(tower_loss)
                     tower_grads.append(grads)
-        grads = average_gradients(tower_grads)
-        apply_gradient_op = optimizer.apply_gradients(grads, global_step=global_step)
+                    reuse_variables = True
+        
+        
+        update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS, 'TOWER_0')
+        with tf.control_dependencies(update_ops):
+            # Average losses accross towers (GPUs)
+            total_loss = tf.reduce_mean(losses, 0)
+            grads = average_gradients(tower_grads)
+            apply_gradient_op = optimizer.apply_gradients(grads, global_step=global_step)
         train_op = apply_gradient_op
-        average_op = tf.reduce_mean(average_loss_tensor, 0)
 
         # Create a saver.
         saver = tf.train.Saver(tf.global_variables())
@@ -150,7 +156,7 @@ def train():
         for step in six.moves.xrange(iterations):
             start_time = time.time()
             #_, loss_v = sess.run([train_op, total_loss])
-            _, loss_v = sess.run([train_op, average_op])
+            _, loss_v = sess.run([train_op, total_loss])
             duration = time.time() - start_time
             average_loss += loss_v
             average_batch_time += float(duration)
@@ -176,6 +182,7 @@ def train():
 
 
 def main(_):
+    os.environ['TF_ENABLE_WINOGRAD_NONFUSED'] = '1'
     train()
 
 
