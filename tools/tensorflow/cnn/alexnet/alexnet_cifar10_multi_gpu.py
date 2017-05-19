@@ -25,7 +25,7 @@ tf.app.flags.DEFINE_integer('batch_size', 1024, """Number of images to process i
 tf.app.flags.DEFINE_integer('epochs', 40, """Max epochs for training.""")
 tf.app.flags.DEFINE_integer('log_step', 100, """Log step""")
 tf.app.flags.DEFINE_integer('eval_step', 1, """Evaluate step of epoch""")
-tf.app.flags.DEFINE_string('device_ids', '0,1', """Device ids. split by comma, e.g. 0,1""")
+tf.app.flags.DEFINE_string('device_ids', '', """Device ids. split by comma, e.g. 0,1""")
 #tf.app.flags.DEFINE_string('data_dir', '/home/comp/csshshi/data/tensorflow/cifar10/cifar-10-batches-bin', """Data directory""")
 tf.app.flags.DEFINE_string('data_dir', os.environ['HOME']+'/data/tensorflow/cifar10/cifar-10-batches-bin', """Data directory""")
 #tf.app.flags.DEFINE_string('data_dir', '/home/comp/pengfeixu/Data/tensorflow/cifar10/cifar-10-batches-bin', """Data directory""")
@@ -36,6 +36,7 @@ tf.app.flags.DEFINE_boolean('use_fp16', False,
 tf.app.flags.DEFINE_boolean('log_device_placement', True,
                             """Whether to log device placement.""")
 tf.app.flags.DEFINE_integer('num_gpus', 2, """How many GPUs to use.""")
+tf.app.flags.DEFINE_string('local_ps_device', 'GPU:0', """Local parameter server GPU:0 if gpus are peered or CPU:0 otherwise try both.""")
 
 EPOCH_SIZE = 50000
 TEST_SIZE = 10000
@@ -139,11 +140,11 @@ def loss_function(logits, labels):
     batch_size = tf.size(labels)
     labels = tf.expand_dims(labels, 1)
     indices = tf.expand_dims(tf.range(0, batch_size, 1), 1)
-    concated = tf.concat(1, [indices, labels])
+    concated = tf.concat(axis=1, values=[indices, labels])
     onehot_labels = tf.sparse_to_dense(
-        concated, tf.pack([batch_size, 10]), 1.0, 0.0)
-    cross_entropy = tf.nn.softmax_cross_entropy_with_logits(logits,
-                                                            onehot_labels,
+        concated, tf.stack([batch_size, 10]), 1.0, 0.0)
+    cross_entropy = tf.nn.softmax_cross_entropy_with_logits(logits=logits,
+                                                            labels=onehot_labels,
                                                             name='xentropy')
     loss = tf.reduce_mean(cross_entropy, name='xentropy_mean')
     return loss
@@ -198,7 +199,7 @@ def average_gradients(tower_grads):
             grads.append(expanded_g)
 
         # Average over the 'tower' dimension.
-        grad = tf.concat(0, grads)
+        grad = tf.concat(axis=0, values=grads)
         grad = tf.reduce_mean(grad, 0)
 
         # Keep in mind that the Variables are redundant because they are shared
@@ -213,10 +214,15 @@ def average_gradients(tower_grads):
 def train():
     global parameters
     config = tf.ConfigProto(allow_soft_placement=True, log_device_placement=FLAGS.log_device_placement)
-    with tf.Graph().as_default(), tf.device("/cpu:0"):
+    with tf.Graph().as_default(), tf.device("/" + FLAGS.local_ps_device):
         global_step = tf.get_variable('global_step', [], initializer=tf.constant_initializer(0), trainable=False)
 
-        device_ids = FLAGS.device_ids.split(',')
+        device_ids = FLAGS.device_ids
+        if not device_ids:
+            device_ids = [str(i) for i in range(FLAGS.num_gpus)]
+        else:
+            device_ids = device_ids.split(',')
+
         print('device_ids: ', device_ids)
         if len(device_ids) > FLAGS.num_gpus:
             print('The device_ids should have the same number of GPUs with num_gpus')
@@ -226,7 +232,7 @@ def train():
         #optimizer = tf.train.GradientDescentOptimizer(lr)
         optimizer = tf.train.MomentumOptimizer(lr, 0.9)
 
-        def assign_to_device(device, ps_device="/cpu:0"):
+        def assign_to_device(device, ps_device="/" + FLAGS.local_ps_device):
             def _assign(op):
                 node_def = op if isinstance(op, tf.NodeDef) else op.node_def
                 if node_def.op == "Variable":
@@ -237,33 +243,22 @@ def train():
 
         tower_grads = []
         average_loss_tensor = []
+        reuse_variables = False
         for i in xrange(FLAGS.num_gpus):
             print('what is i: ', i)
-            #with tf.device(assign_to_device('/gpu:%s'%device_ids[i])):
             with tf.device('/gpu:%s'%device_ids[i]):
                 with tf.name_scope('%s_%s' % ('TOWER', device_ids[i])) as n_scope:
                     _init_global_variables()
-                    images, labels = cifar10_input.inputs(False, FLAGS.data_dir, FLAGS.batch_size)
-                    logits = inference(images)
+                    with tf.device('/cpu:0'):
+                        images, labels = cifar10_input.inputs(False, FLAGS.data_dir, FLAGS.batch_size)
+                    with tf.variable_scope(tf.get_variable_scope(), reuse=reuse_variables):    
+                        logits = inference(images)
                     loss = loss_function(logits, labels)
+                    reuse_variables = True
 
-                    tf.add_to_collection('losses', loss)
-                    tf.add_n(tf.get_collection('losses'), name='total_loss')
-
-                    losses = tf.get_collection('losses', n_scope)
-                    total_loss = tf.add_n(losses, name='total_loss')
-                    average_loss_tensor.append(total_loss)
-
-                    tf.get_variable_scope().reuse_variables()
-                    print('total_loss: ', total_loss)
-                    grads = optimizer.compute_gradients(total_loss)
-                    print('grads: ', grads)
-
+                    average_loss_tensor.append(loss)
+                    grads = optimizer.compute_gradients(loss)
                     tower_grads.append(grads)
-
-        print('tower_grads: ', tower_grads)
-        print('len0: ', len(tower_grads[0]))
-        print('len1: ', len(tower_grads[1]))
 
         grads = average_gradients(tower_grads)
         apply_gradient_op = optimizer.apply_gradients(grads, global_step=global_step)
@@ -271,9 +266,9 @@ def train():
         average_op = tf.reduce_mean(average_loss_tensor, 0)
 
         # Create a saver.
-        saver = tf.train.Saver(tf.all_variables())
+        saver = tf.train.Saver(tf.global_variables())
 
-        init = tf.initialize_all_variables()
+        init = tf.global_variables_initializer()
         sess = tf.Session(config=config)
         sess.run(init)
         coord = tf.train.Coordinator()
@@ -321,6 +316,7 @@ def train():
 
 
 def main(_):
+    os.environ['TF_ENABLE_WINOGRAD_NONFUSED'] = '1'
     train()
 
 

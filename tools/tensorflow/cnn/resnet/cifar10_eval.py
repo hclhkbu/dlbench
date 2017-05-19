@@ -132,7 +132,7 @@ def evaluate():
     # Build a Graph that computes the logits predictions from the
     # inference model.
     #logits = inference(images, is_training=False)
-    logits = inference_small(images, is_training=True, num_blocks=9)
+    logits = inference_small(images, is_training=False, num_blocks=9)
 
     # Calculate predictions.
     top_k_op = tf.nn.in_top_k(logits, labels, 1)
@@ -145,9 +145,9 @@ def evaluate():
     saver = tf.train.Saver()
 
     # Build the summary operation based on the TF collection of Summaries.
-    summary_op = tf.merge_all_summaries()
+    summary_op = tf.summary.merge_all()
 
-    summary_writer = tf.train.SummaryWriter(FLAGS.eval_dir, g)
+    summary_writer = tf.summary.FileWriter(FLAGS.eval_dir, g)
 
     while True:
       eval_once(saver, summary_writer, top_k_op, summary_op)

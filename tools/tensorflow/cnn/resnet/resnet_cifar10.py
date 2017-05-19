@@ -56,7 +56,8 @@ def train():
       num_threads = os.getenv('OMP_NUM_THREADS', 1)
       config = tf.ConfigProto(allow_soft_placement=True, intra_op_parallelism_threads=int(num_threads))
   with tf.Graph().as_default(), tf.device(device_str), tf.Session(config=config) as sess:
-      images, labels = cifar10_input.inputs(False, FLAGS.data_dir, FLAGS.batch_size)
+      with tf.device('/cpu:0'):
+        images, labels = cifar10_input.inputs(False, FLAGS.data_dir, FLAGS.batch_size)
       print('Images: ', images)
 
       #logits = inference(images, is_training=True, num_blocks=9)
@@ -65,14 +66,15 @@ def train():
       loss_value = loss(logits, labels)
       # Compute the gradient with respect to all the parameters.
       lr = 0.01
-      #grad = tf.train.GradientDescentOptimizer(lr).minimize(loss_value)
-      grad = tf.train.MomentumOptimizer(lr, 0.9).minimize(loss_value)
+      update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
+      with tf.control_dependencies(update_ops):
+        grad = tf.train.MomentumOptimizer(lr, 0.9).minimize(loss_value)
 
       # Create a saver.
-      saver = tf.train.Saver(tf.all_variables())
+      saver = tf.train.Saver(tf.global_variables())
 
       # Build an initialization operation.
-      init = tf.initialize_all_variables()
+      init = tf.global_variables_initializer()
       # Start running operations on the Graph.
       sess.run(init)
       coord = tf.train.Coordinator()
@@ -113,6 +115,7 @@ def train():
 
 
 def main(_):
+    os.environ['TF_ENABLE_WINOGRAD_NONFUSED'] = '1'
     train()
 
 
