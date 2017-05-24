@@ -268,7 +268,6 @@ class MyBucketSentenceIter(mx.io.DataIter):
             self.read_content = read_content
 	print 'path: ', path
         content = self.read_content(path)
-
         #sentences = content.split(seperate_char)
 	words = content.split(' ')
 	words = words[1:] 
