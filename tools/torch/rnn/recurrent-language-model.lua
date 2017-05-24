@@ -55,6 +55,7 @@ opt.id = opt.id == '' and ('ptb' .. ':' .. dl.uniqueid()) or opt.id
 opt.device = opt.device + 1
 if opt.cuda then
    require 'cunn'
+   require 'cudnn'
    cutorch.setDevice(opt.device)
 end
 
@@ -90,10 +91,17 @@ for i,hiddensize in ipairs(opt.hiddensize) do
    if opt.gru then -- Gated Recurrent Units
       rnn = nn.GRU(inputsize, hiddensize, nil, opt.dropout/2)
    elseif opt.lstm then -- Long Short Term Memory units
-      require 'nngraph'
-      nn.FastLSTM.usenngraph = true -- faster
-      nn.FastLSTM.bn = opt.bn
-      rnn = nn.FastLSTM(inputsize, hiddensize)
+      print("inputsize: " .. inputsize)
+      print("hiddensize: " .. hiddensize)
+      print("i: " .. i)
+      if opt.cuda then
+	  rnn = cudnn.LSTM(opt.seqlen, opt.batchsize, inputsize)
+      else
+          require 'nngraph'
+          nn.FastLSTM.usenngraph = true -- faster
+          nn.FastLSTM.bn = opt.bn
+          rnn = nn.FastLSTM(inputsize, hiddensize)
+      end
    else -- simple recurrent neural network
       local rm =  nn.Sequential() -- input is {x[t], h[t-1]}
          :add(nn.ParallelTable()
@@ -152,6 +160,7 @@ local criterion = nn.SequencerCriterion(crit)
 
 if opt.cuda then
    lm:cuda()
+   --cudnn.convert(lm, cudnn)
    criterion:cuda()
    targetmodule:cuda()
 end

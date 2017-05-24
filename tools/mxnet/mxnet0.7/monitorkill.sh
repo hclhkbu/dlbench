@@ -22,5 +22,5 @@ sleep 5
 for ((i=10; i<=21; i++))
 do
 	echo Kill process in gpu$i;
-	ssh gpu$i "./killMXnet.sh";
+	ssh gpu$i "$HOME/bin/killMXnet.sh";
 done

@@ -1,6 +1,7 @@
 from common import find_mxnet
 import numpy as np
-import os
+import os, sys
+print sys.path
 import mxnet as mx
 import argparse
 
