@@ -44,7 +44,7 @@ Follow the instructions in *tools/Readsme.md* preparing the running scripts and 
 
 ### Update log    
 May 24, 2017:   
-- Updated the scripts for mxnet, previous scripts are still preserved in tools/mxnet/mxnet0.7    
+- Updated the scripts for mxnet0.9.5, previous scripts are still preserved in tools/mxnet/mxnet0.7    
 - Updated benchmark.py and the format of config files. Now you only need to specify the device id (-1 for CPU; 0,1,2,3 for GPU) and device count (number of cores to use)  in the config file. An example called test.config can be found in configs/   
 - yaroslavvb helped improve the performance of CNTK CIFAR by keeping variables on CPU. Thank you!
 - tfboyd optimized the scripts for tensorflow by changing the image processing place to CPU and some other tweaks making tensorflow run faster then before. Thank you!   
