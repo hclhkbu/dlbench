@@ -101,7 +101,12 @@ def train(model='fcn5'):
         print("The number of GPU should be 2 or more, if you use one GPU, please use fcn5_mnist.py to train")
         return
 
-    config = tf.ConfigProto(allow_soft_placement=True,log_device_placement=FLAGS.log_device_placement)
+    config = tf.ConfigProto(allow_soft_placement=True,log_device_placement=FLAGS.log_device_placement,
+                            intra_op_parallelism_threads=1,inter_op_parallelism_threads=0)
+
+    # Turns on XLA.  XLA is not included in the standard build.  For single GPU this shows ~5% improvement
+    #config.graph_options.optimizer_options.global_jit_level = tf.OptimizerOptions.ON_1
+
 
     with tf.Graph().as_default(), tf.device("/cpu:0"):
         global_step = tf.get_variable('global_step', [], initializer=tf.constant_initializer(0), trainable=False)
