@@ -115,14 +115,23 @@ def train(model='fcn5'):
         #optimizer = tf.train.GradientDescentOptimizer(lr)
         optimizer = tf.train.MomentumOptimizer(lr, 0.9)
 
-        def assign_to_device(device, ps_device="/cpu:0"):
+        def assign_to_device(device, ps_device="/" + FLAGS.local_ps_device):
+            worker_device = device
+            ps_sizes = [0] * FLAGS.num_gpus
             def _assign(op):
-                node_def = op if isinstance(op, tf.NodeDef) else op.node_def
-                if node_def.op == "Variable":
-                    return ps_device
-                else:
-                    return device
+                if op.device:
+                  return op.device
+                if op.type not in ['Variable', 'VariableV2']:
+                  return worker_device
+
+                device_index, _ = min(enumerate(
+                    ps_sizes), key=operator.itemgetter(1))
+                device_name = '/GPU:' + str(device_index)
+                var_size = op.outputs[0].get_shape().num_elements()
+                ps_sizes[device_index] += var_size
+                return device_name
             return _assign
+
 
         tower_grads = []
         feed_vars = []
@@ -209,6 +218,7 @@ def train(model='fcn5'):
 
 
 def main(argv=None):
+    os.environ['TF_SYNC_ON_FINISH'] = '0'
     train(model='fcn5')
 
 
