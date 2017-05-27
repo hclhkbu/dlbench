@@ -53,11 +53,14 @@ def get_real_batch_data(batch_size, label_dim):
 
 
 def train(model='fcn5'):
-    config = tf.ConfigProto(allow_soft_placement=False,log_device_placement=FLAGS.log_device_placement)
+    config = tf.ConfigProto(log_device_placement=FLAGS.log_device_placement)
     device_id = FLAGS.device_id
     device_str = ''
     if int(device_id) >= 0:
         device_str = '/gpu:%d'%int(device_id)
+        config.allow_soft_placement = True
+        config.intra_op_parallelism_threads = 1
+        config.inter_op_parallelism_threads = 0
     else:
         device_str = '/cpu:0'
         num_threads = os.getenv('OMP_NUM_THREADS', 1)
@@ -117,6 +120,7 @@ def train(model='fcn5'):
 
 
 def main(argv=None):
+    os.environ['TF_SYNC_ON_FINISH'] = '0'
     train(model='fcn5')
 
 
