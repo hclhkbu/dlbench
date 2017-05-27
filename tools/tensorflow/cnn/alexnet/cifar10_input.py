@@ -91,7 +91,7 @@ def read_cifar10(filename_queue):
                            [result.depth, result.height, result.width])
   # Convert from [depth, height, width] to [height, width, depth].
   result.uint8image = tf.transpose(depth_major, [1, 2, 0])
-
+  #result.uint8image = depth_major
   return result
 
 
@@ -113,7 +113,7 @@ def _generate_image_and_label_batch(image, label, min_queue_examples,
   """
   # Create a queue that shuffles the examples, and then
   # read 'batch_size' images + labels from the example queue.
-  num_preprocess_threads = 4 
+  num_preprocess_threads = 8
   if shuffle:
     images, label_batch = tf.train.shuffle_batch(
         [image, label],
@@ -238,7 +238,7 @@ def inputs(eval_data, data_dir, batch_size):
   float_image = resized_image #tf.image.per_image_whitening(resized_image)
 
   # Ensure that the random shuffling has good mixing properties.
-  min_fraction_of_examples_in_queue = 0.4
+  min_fraction_of_examples_in_queue = .4
   min_queue_examples = int(num_examples_per_epoch *
                            min_fraction_of_examples_in_queue)
   print('min_queue_examples: ', min_queue_examples)
