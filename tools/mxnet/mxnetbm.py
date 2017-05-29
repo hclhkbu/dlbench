@@ -13,7 +13,6 @@ parser.add_argument('-network', type=str, default='fcn5', help='name of network[
 parser.add_argument('-devId', type=str, help='CPU: -1, GPU:0,1,2,3(Multiple gpu supported)')
 parser.add_argument('-numEpochs', type=str, default='10', help='number of epochs, default=10')
 parser.add_argument('-epochSize', type=str, default='50000', help='number of training data per epoch')
-parser.add_argument('-numThreads', type=str, default='8', help='number of Threads, default=8')
 parser.add_argument('-hostFile', type=str, help='path to running hosts(config in host file) for multiple machine training.')
 parser.add_argument('-gpuCount', type=str, help='number of gpus in used')
 parser.add_argument('-cpuCount', type=str, default='1', help='number of cpus in used for cpu version')
@@ -32,35 +31,31 @@ os.environ['MKL_NUM_THREADS'] = args.cpuCount
 
 # Build cmd
 exePath = ""
-cmd = "cd "
+cmd = " "
 pyscript=""
 network = args.network
 numSamples = args.epochSize
 if network == "fcn5":
-    exePath = "fc/"
-    cmd += "fc; "
+    exePath = "./"
     pyscript = "python train_mnist.py --lr " + args.lr
 elif network == "alexnet" or network == "resnet":
-    exePath = "cnn/"
-    cmd += "cnn; "
-    pyscript = "python train_cifar10_" + network + ".py --lr " + args.lr
+    exePath = "./"
+    pyscript = "python train_cifar10.py --network " + network + " --lr " + args.lr
 elif "lstm" in network:
-    exePath = "rnn/"
-    cmd += "rnn; "
+    exePath = "./"
     pyscript = "python train_rnn.py --lr " + args.lr
     if "64" in network:
         pyscript += " --sequence-lens 64"
     else:
         pyscript += " --sequence-lens 32"
 else:
-    print("Unknown network type " + network + ", supported ones: fcn, alexnet, resnet, lstm32, lstm64")
+    print("Unknown network type " + network + ", supported ones: fcn5, alexnet, resnet, lstm")
     sys.exit(-1)
 
 numNodes = 1 if args.hostFile is None else int(subprocess.check_output("cat " + args.hostFile + " | wc -l", shell=True).strip())
 if args.hostFile is not None:
     cmd += "PS_VERBOSE=0 nohup python ../multi-nodes-support/launch.py --launcher ssh -n " + str(numNodes) + " -s 1 -H " + args.hostFile + " " + pyscript
     cmd += " --kv-store dist_sync" + " --num-nodes " + str(numNodes) + " " 
-    if network == "resnet":  cmd += "--optimizer SGD "
     os.system("sh monitorkill.sh >& kill.log &")
 else:
     cmd += pyscript
@@ -79,8 +74,6 @@ if devId is not None:
             cmd += " --kv-store device"
     elif "-1" == devId:
         pass
-        #os.environ["MXNET_CPU_WORKER_NTHREADS"] = args.numThreads
-        #print os.environ["MXNET_CPU_WORKER_NTHREADS"]
     else:
         print("invalid devId!")
         sys.exit(-1)
@@ -101,8 +94,8 @@ os.system(cmd)
 t = time.time() - t
 if args.hostFile is not None:
 	if args.debug: print "kill monitorkill"
-	os.system("kill -9 `ps auw | grep pengfei | grep monitorkill | awk '{print $2}'`")
-	os.system("kill -9 `ps auw | grep pengfei | grep sleep | awk '{print $2}'`")
+	os.system("kill -9 `ps auw | grep" + os.environ['USER'] + "  | grep monitorkill | awk '{print $2}'`")
+	os.system("kill -9 `ps auw | grep" + os.environ['USER'] + "  | grep sleep | awk '{print $2}'`")
 if args.debug: print("Time diff: " + str(t))
 logPath = exePath + logfile
 catLog = "cat " + logPath

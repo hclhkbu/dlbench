@@ -1,7 +1,6 @@
 # pylint: disable=C0111,too-many-arguments,too-many-instance-attributes,too-many-locals,redefined-outer-name,fixme
 # pylint: disable=superfluous-parens, no-member, invalid-name
 import sys
-sys.path.insert(0, "../../python")
 import numpy as np
 import mxnet as mx
 
@@ -269,7 +268,6 @@ class MyBucketSentenceIter(mx.io.DataIter):
             self.read_content = read_content
 	print 'path: ', path
         content = self.read_content(path)
-
         #sentences = content.split(seperate_char)
 	words = content.split(' ')
 	words = words[1:] 

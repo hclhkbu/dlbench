@@ -49,10 +49,6 @@ import os
 FLAGS = tf.app.flags.FLAGS
 
 tf.app.flags.DEFINE_string('data_dir', os.environ['HOME']+'/data/tensorflow/cifar10/cifar-10-batches-bin', """Data directory""")
-#tf.app.flags.DEFINE_string('data_dir', '/home/comp/pengfeixu/Data/tensorflow/cifar10/cifar-10-batches-bin',
-#        """Data directory""")
-#tf.app.flags.DEFINE_string('data_dir', '/home/ipdps/Data/tensorflow/cifar10/cifar-10-batches-bin',
-#        """Data directory""")
 tf.app.flags.DEFINE_integer('batch_size', 16, """Number of images to process in a batch.""")
 tf.app.flags.DEFINE_string('eval_dir', './train_eval',
                            """Either 'test' or 'train_eval'.""")

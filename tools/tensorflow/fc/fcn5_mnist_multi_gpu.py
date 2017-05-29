@@ -1,4 +1,5 @@
 import os
+import operator
 import tensorflow as tf
 import models
 import time
@@ -17,7 +18,7 @@ tf.app.flags.DEFINE_integer('batch_size', 1024, """Number of images to process i
 tf.app.flags.DEFINE_integer('epochs', 40, """Max epochs for training.""")
 tf.app.flags.DEFINE_integer('log_step', 10, """Log step""")
 tf.app.flags.DEFINE_integer('eval_step', 1, """Evaluate step of epoch""")
-tf.app.flags.DEFINE_string('device_ids', '0,1', """Device ids. split by comma, e.g. 0,1""")
+tf.app.flags.DEFINE_string('device_ids', '', """Device ids. split by comma, e.g. 0,1""")
 #tf.app.flags.DEFINE_string('data_dir', '/home/comp/csshshi/data/tensorflow/MNIST_data/',
 tf.app.flags.DEFINE_string('data_dir', os.environ['HOME']+'/data/tensorflow/MNIST_data/',
 #tf.app.flags.DEFINE_string('data_dir', '/home/comp/pengfeixu/Data/tensorflow/MNIST_data/',
@@ -27,6 +28,11 @@ tf.app.flags.DEFINE_boolean('use_fp16', False,
 tf.app.flags.DEFINE_boolean('log_device_placement', True,
                             """Whether to log device placement.""")
 tf.app.flags.DEFINE_integer('num_gpus', 2, """How many GPUs to use.""")
+tf.app.flags.DEFINE_string('local_ps_device', 'GPU', """Local parameter server GPU if gpus are peered or CPU otherwise try both.""")
+tf.app.flags.DEFINE_boolean('use_dataset', False,
+                            """Whether to use datasets vs. feed_dict.""")
+tf.app.flags.DEFINE_boolean('xla', False,
+                            """True to use XLA, which has to be compiled in.""")
 
 EPOCH_SIZE = 60000
 TEST_SIZE = 10000
@@ -70,115 +76,113 @@ def average_gradients(tower_grads):
        across all towers.
     """
     average_grads = []
-    for grad_and_vars in zip(*tower_grads):
-      # Note that each grad_and_vars looks like the following:
-      #   ((grad0_gpu0, var0_gpu0), ... , (grad0_gpuN, var0_gpuN))
-      grads = []
-      for g, _ in grad_and_vars:
-        # Add 0 dimension to the gradients to represent the tower.
-        expanded_g = tf.expand_dims(g, 0)
-
-        # Append on a 'tower' dimension which we will average over below.
-        grads.append(expanded_g)
-
-      # Average over the 'tower' dimension.
-      grad = tf.concat(0, grads)
-      grad = tf.reduce_mean(grad, 0)
-
-      # Keep in mind that the Variables are redundant because they are shared
-      # across towers. So .. we will just return the first tower's pointer to
-      # the Variable.
-      v = grad_and_vars[0][1]
-      grad_and_var = (grad, v)
-      average_grads.append(grad_and_var)
+    for single_grads in zip(*tower_grads):
+        grads = [g for g, _ in single_grads]
+        grad = tf.add_n(grads)
+        grad = tf.multiply(grad, 1.0/len(grads))
+        v = single_grads[0][1]
+        grad_and_var = (grad, v)
+        average_grads.append(grad_and_var)
     return average_grads
 
 
-
-
 def train(model='fcn5'):
-    if FLAGS.num_gpus < 2:
-        print("The number of GPU should be 2 or more, if you use one GPU, please use fcn5_mnist.py to train")
-        return
 
-    config = tf.ConfigProto(allow_soft_placement=True,log_device_placement=FLAGS.log_device_placement,
-                            intra_op_parallelism_threads=1,inter_op_parallelism_threads=0)
+    config = tf.ConfigProto(allow_soft_placement=True,log_device_placement=FLAGS.log_device_placement)
 
-    # Turns on XLA.  XLA is not included in the standard build.  For single GPU this shows ~5% improvement
-    #config.graph_options.optimizer_options.global_jit_level = tf.OptimizerOptions.ON_1
+    if FLAGS.xla:
+        # Turns on XLA.  XLA is not included in the standard build.  For single GPU this shows ~5% improvement
+        config.graph_options.optimizer_options.global_jit_level = tf.OptimizerOptions.ON_1
 
-
-    with tf.Graph().as_default(), tf.device("/cpu:0"):
+    with tf.Graph().as_default(), tf.device("/" + FLAGS.local_ps_device + ":0"):
         global_step = tf.get_variable('global_step', [], initializer=tf.constant_initializer(0), trainable=False)
 
-        device_ids = FLAGS.device_ids.split(',')
-        if len(device_ids) > FLAGS.num_gpus:
-            print('The device_ids should have the same number of GPUs with num_gpus')
-            return
+        device_ids = FLAGS.device_ids
+        if not device_ids:
+            device_ids = [str(i) for i in range(FLAGS.num_gpus)]
+        else:
+            device_ids = device_ids.split(',')
 
         lr = 0.05
         #optimizer = tf.train.GradientDescentOptimizer(lr)
         optimizer = tf.train.MomentumOptimizer(lr, 0.9)
 
-        def assign_to_device(device, ps_device="/" + FLAGS.local_ps_device):
+        def assign_to_device(device, ps_device=FLAGS.local_ps_device):
             worker_device = device
-            ps_sizes = [0] * FLAGS.num_gpus
+            ps_sizes = [0]
+            if FLAGS.local_ps_device.lower == 'gpu':
+                ps_sizes = [0] * FLAGS.num_gpus
             def _assign(op):
                 if op.device:
                   return op.device
                 if op.type not in ['Variable', 'VariableV2']:
                   return worker_device
-
                 device_index, _ = min(enumerate(
                     ps_sizes), key=operator.itemgetter(1))
-                device_name = '/GPU:' + str(device_index)
+                device_name = '/' + FLAGS.local_ps_device +':' + str(device_index)
                 var_size = op.outputs[0].get_shape().num_elements()
                 ps_sizes[device_index] += var_size
                 return device_name
             return _assign
 
+        images = None
+        labels = None
+        if FLAGS.use_dataset:
+            with tf.device('/CPU:0'):
+                d_features = mnist.train.images
+                d_labels = mnist.train.labels
+                dataset = tf.contrib.data.Dataset.from_tensor_slices((d_features, d_labels))
+                dataset = dataset.shuffle(buffer_size=60000)
+                dataset = dataset.repeat()
+                dataset = dataset.batch(FLAGS.batch_size)
+                # Trick to get datasets to buffer the next epoch.  This is needed because
+                # the data loading is occuring outside DataSets in python.  Normally preprocessing
+                # would occur in DataSets and this odd looking line is not needed.  
+                dataset = dataset.map(lambda x,y:(x,y),
+                    num_threads=FLAGS.num_gpus,
+                    output_buffer_size=FLAGS.num_gpus)
+                iterator = dataset.make_initializable_iterator()
+                images,labels = iterator.get_next()
 
         tower_grads = []
         feed_vars = []
         average_loss_tensor = []
+        reuse_variables = False
+        accuracy = None
         for i in xrange(FLAGS.num_gpus):
             with tf.device(assign_to_device('/gpu:%s'%device_ids[i])):
                 with tf.name_scope('%s_%s' % ('TOWER', device_ids[i])) as scope:
-                    feature_dim = models.feature_dim
-                    label_dim = models.label_dim
-                    images = tf.placeholder(tf.float32, [None, feature_dim], name='images')
-                    labels = tf.placeholder(tf.float32, [None, label_dim], name='labels')
-                    feed_vars.append((images, labels))
-
-                    logits = models.model_fcn5(images)
+                    if not FLAGS.use_dataset:
+                        feature_dim = models.feature_dim
+                        label_dim = models.label_dim
+                        images = tf.placeholder(tf.float32, [None, feature_dim], name='images')
+                        labels = tf.placeholder(tf.int64, [None, label_dim], name='labels')
+                        feed_vars.append((images, labels))
+                    with tf.variable_scope(tf.get_variable_scope(), reuse=reuse_variables): 
+                        logits = models.model_fcn5(images)
+                    if i == 0:
+                        # Prediction only on GPU:0
+                        predictionCorrectness = tf.equal(tf.argmax(logits, 1), tf.argmax(labels, 1))
+                        accuracy = tf.reduce_mean(tf.cast(predictionCorrectness, "float"))
                     loss = models.loss(logits, labels)
-                    tf.add_to_collection('losses', loss)
-
-                    #tf.add_n(tf.get_collection('losses'), name='total_loss')
-                    losses = tf.get_collection('losses', scope)
-                    total_loss = tf.add_n(losses, name='total_loss')
-                    average_loss_tensor.append(total_loss)
-
-                    tf.get_variable_scope().reuse_variables()
-                    grads = optimizer.compute_gradients(total_loss)
+                    reuse_variables = True
+                    average_loss_tensor.append(loss)
+                    grads = optimizer.compute_gradients(loss)
                     tower_grads.append(grads)
-
-        print('tower_grads: ', tower_grads, '\nlen: ', len(tower_grads))
-        print ('total_loss: ', total_loss)
 
         grads = average_gradients(tower_grads)
         apply_gradient_op = optimizer.apply_gradients(grads, global_step=global_step)
 
         train_op = apply_gradient_op
-        average_op = tf.reduce_mean(average_loss_tensor, 0)
-        saver = tf.train.Saver(tf.all_variables())
+        average_op = tf.reduce_mean(average_loss_tensor)
+        saver = tf.train.Saver(tf.global_variables())
 
-        init = tf.initialize_all_variables()
+        init = tf.global_variables_initializer()
         sess = tf.Session(config=config)
         sess.run(init)
-
-        tf.train.start_queue_runners(sess=sess)
-
+        if FLAGS.use_dataset:
+            sess.run(iterator.initializer)
+            
         real_batch_size = FLAGS.batch_size * FLAGS.num_gpus
         num_batches_per_epoch = int((EPOCH_SIZE + real_batch_size - 1)/ real_batch_size)
         iterations = FLAGS.epochs * num_batches_per_epoch 
@@ -189,12 +193,12 @@ def train(model='fcn5'):
         average_loss = 0.0
         for step in range(iterations):
             start_time = time.time()
-            imgs, labs = get_real_batch_data(real_batch_size, 10)
             feed_dict = {}
-            for i in range(FLAGS.num_gpus):
-                feed_dict[feed_vars[i][0]] = imgs[i*FLAGS.batch_size:(i+1)*FLAGS.batch_size]
-                feed_dict[feed_vars[i][1]] = labs[i*FLAGS.batch_size:(i+1)*FLAGS.batch_size] 
-           # _, loss_value = sess.run([train_op, total_loss], feed_dict=feed_dict)
+            if not FLAGS.use_dataset:
+                imgs, labs = get_real_batch_data(real_batch_size, 10)
+                for i in range(FLAGS.num_gpus):
+                    feed_dict[feed_vars[i][0]] = imgs[i*FLAGS.batch_size:(i+1)*FLAGS.batch_size]
+                    feed_dict[feed_vars[i][1]] = labs[i*FLAGS.batch_size:(i+1)*FLAGS.batch_size] 
             _, loss_value = sess.run([train_op, average_op], feed_dict=feed_dict)
             duration = time.time() - start_time
             average_batch_time += float(duration)
@@ -213,6 +217,13 @@ def train(model='fcn5'):
                 print ('epoch: %d, loss: %.2f' % (step/(FLAGS.eval_step*num_batches_per_epoch), average_loss))
                 epochs_info.append('%d:-:%s'%(step/(FLAGS.eval_step*num_batches_per_epoch), average_loss)) 
                 average_loss = 0.0
+                feed_dict = { images: mnist.test.images, labels :mnist.test.labels }
+                if not FLAGS.use_dataset:
+                    feed_dict = {}
+                    feed_dict[feed_vars[0][0]] = mnist.test.images
+                    feed_dict[feed_vars[0][1]] = mnist.test.labels
+                accuracy_value = accuracy.eval(session=sess, feed_dict=feed_dict)
+                print("test accuracy %g"%accuracy_value)
 
         checkpoint_path = os.path.join(FLAGS.train_dir, 'model.ckpt')
         saver.save(sess, checkpoint_path, global_step=step)
@@ -224,6 +235,7 @@ def train(model='fcn5'):
 
 def main(argv=None):
     os.environ['TF_SYNC_ON_FINISH'] = '0'
+    os.environ['TF_ENABLE_WINOGRAD_NONFUSED'] = '1'
     train(model='fcn5')
 
 

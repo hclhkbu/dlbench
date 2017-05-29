@@ -80,7 +80,7 @@ def fit(args, network, data_loader, batch_end_callback=None):
         momentum           = 0.9,
         wd                 = 0.00001,
 #        initializer        = mx.init.Xavier(factor_type="in", magnitude=2.34),
-        initializer        = mx.init.Normal(sigma=0.01),
+        initializer        = mx.initializer.Normal(sigma=0.01),
         **model_args)
 
     eval_metrics = ['accuracy', 'ce']
@@ -90,7 +90,11 @@ def fit(args, network, data_loader, batch_end_callback=None):
             batch_end_callback = [batch_end_callback]
     else:
         batch_end_callback = []
-    batch_end_callback.append(mx.callback.Speedometer(args.batch_size, int((args.num_examples/args.num_nodes)/args.batch_size)))
+    batch_end_callback.append(mx.callback.Speedometer(args.batch_size, int((args.num_examples/args.num_nodes)/args.batch_size) - 1))
+    print "num_examples:" + str(args.num_examples)
+    print "num_nodes:" + str(args.num_nodes)
+    print "batchz_size: " + str(args.batch_size)
+    print "Gap in between: " + str(int((args.num_examples/args.num_nodes)/args.batch_size))
     #batch_end_callback.append(mx.callback.Speedometer(args.batch_size, 1))
 
     model.fit(

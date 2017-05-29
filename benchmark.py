@@ -20,7 +20,7 @@ host_file = None
 flag = ''
 tools = ''
 cpu_name = ''
-device_name = ''
+gpu_name = ''
 cuda_driver = ''
 cudnn = ''
 cuda = ''
@@ -44,16 +44,14 @@ if args.config is not None:
 				host_file = line.split(':')[1]
 			elif "cpu_name:" in line:
 				cpu_name = line.split(':')[1]
-			elif "device_name:" in line:
-				device_name = line.split(':')[1]
+			elif "gpu_name:" in line:
+				gpu_name = line.split(':')[1]
 			elif "cuda_driver:" in line:
 				cuda_driver = line.split(':')[1]
 			elif "cudnn:" in line:
 				cudnn = line.split(':')[1]
 			elif "cuda:" in line:
 				cuda = line.split(':')[1]
-			elif "cpu_count:" in line:
-				cpu_count = line.split(':')[1]
 		else:
 			if "}" in line:
 				config_experiments = False
@@ -64,7 +62,7 @@ else:
 	print("Please add -config <path to your config file>")
 	sys.exit(0)
 
-post_flags = " -f " + flag + " -d " + device_name + " -c " + cpu_count + " -P " + cpu_name + " -A unknown" + " -r " + cuda_driver + " -C " + cuda + " -D " + cudnn
+post_flags = " -f " + flag + " -P " + cpu_name + " -A unknown" + " -r " + cuda_driver + " -C " + cuda + " -D " + cudnn
 
 if args.debug:
 	print "[DEBUG] Defalut post flags:" + str(post_flags)
@@ -88,13 +86,26 @@ for tool in tools:
 	for experiment in experiments:
 		os.chdir(work_dir)
 		exp_args = experiment.split(";")
+		device_name = ''
+		device_count = exp_args[3]
+		log_file = ''
+		if "-1" in exp_args[2]:
+			device_name = cpu_name
+			log_file = tool + "-" + exp_args[0] + "-" + exp_args[1] + "-" + device_name + "-c" + exp_args[3] + "-" +"b"+ exp_args[4] + "-" 
+		else:
+			device_name = gpu_name
+			log_file = tool + "-" + exp_args[0] + "-" + exp_args[1] + "-" + device_name + "-devId" + exp_args[2] + "-c" + exp_args[3] + "-" +"b"+ exp_args[4] + "-" 
 		print "\n-------Benchmarking " + tool + " " + exp_args[1] + "-------"
-		log_file = tool + "-" + exp_args[0] + "-" + exp_args[1] + "-" +"gpu"+ exp_args[2] + "-" + device_name + "-" +"b"+ exp_args[4] + "-" 
 		log_file += time.ctime()+ "-" + host_name + ".log"
 		log_file = log_file.replace(" ","_")
 		bm_script = "python " + tool + "bm.py" 
-		bm_script += " -netType "+exp_args[0]+" -log "+log_file+" -batchSize "+exp_args[4]+" -network "+exp_args[1]+" -lr "+exp_args[7] + " -cpuCount " + cpu_count
-		bm_script += " -devId " + exp_args[2] + " -numEpochs " + exp_args[5] + " -epochSize " + exp_args[6] + " -gpuCount " + exp_args[3]
+		bm_script += " -netType " + exp_args[0] + " -log "+log_file+" -batchSize "+exp_args[4]+" -network "+exp_args[1]+" -lr "+exp_args[7]
+		if "-1" in exp_args[2]:
+			bm_script += " -devId " + exp_args[2] + " -numEpochs " + exp_args[5] + " -epochSize " + exp_args[6] + " -cpuCount " + exp_args[3]
+			post_flags +=  " -c " + cpu_name 
+		else:
+			bm_script += " -devId " + exp_args[2] + " -numEpochs " + exp_args[5] + " -epochSize " + exp_args[6] + " -gpuCount " + exp_args[3]
+			post_flags +=  " -d " + gpu_name 
 		if host_file is not None and len(host_file) > 4:
 			bm_script += " -hostFile " + host_file
 		print bm_script
@@ -111,7 +122,7 @@ for tool in tools:
 			post_script = "python post_record.py " + post_flags
 			print post_script
 			print(subprocess.check_output(post_script, shell=True).strip().split('\n')[0])
-			post_flags = " -f " + flag + " -d " + device_name + " -c " + cpu_count + " -P " + cpu_name + " -A unknown" + " -r " + cuda_driver + " -C " + cuda + " -D " + cudnn
+			post_flags = " -f " + flag + " -d " + device_name + " -P " + cpu_name + " -A unknown" + " -r " + cuda_driver + " -C " + cuda + " -D " + cudnn
 			post_script = ''
 		else:
 			print "Result:"
