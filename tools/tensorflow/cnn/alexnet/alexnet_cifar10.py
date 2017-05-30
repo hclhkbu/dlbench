@@ -34,6 +34,7 @@ tf.app.flags.DEFINE_boolean('use_fp16', False,
 tf.app.flags.DEFINE_boolean('log_device_placement', False,
                             """Whether to log device placement.""")
 tf.app.flags.DEFINE_boolean('use_dataset', False, """True to use datasets""")
+tf.app.flags.DEFINE_boolean('data_format', 'NCHW', """NCHW for GPU and NHWC for CPU.""")
 
 data_format = 'NCHW'
 data_format_c = 'channels_first'
@@ -70,7 +71,7 @@ def _conv(inpOp, nIn, nOut, kH, kW, dH, dW, padType):
 
         bias = tf.reshape(tf.nn.bias_add(conv, biases, data_format=data_format),
                           conv.get_shape())
-        return bias
+        return conv
 
 
 def _relu(inpOp):
@@ -78,8 +79,11 @@ def _relu(inpOp):
 
 
 def _padding(inpOp, pad):
-    padded_input = tf.pad(inpOp, [[0, 0], [0, 0], [pad, pad], [pad, pad]], "CONSTANT")
-    return padded_input
+  if data_format == 'NHWC':
+    return tf.pad(inpOp, [[0, 0], [pad, pad], [pad, pad], [0, 0]], "CONSTANT")
+  else:
+    return tf.pad(inpOp, [[0, 0], [0, 0], [pad, pad], [pad, pad]], "CONSTANT")
+
 
 
 def _norm(inpOp, local_size, alpha, beta):
@@ -136,6 +140,10 @@ def loss(logits, labels):
     return loss
 
 def inference(images):
+    
+    #if data_format == 'NHWC':
+    #  images = tf.transpose(images,[0,2,3,1])
+
     pad1 = _padding(images, 2) 
     conv1 = _conv (pad1, 3, 32, 5, 5, 1, 1, 'VALID')
     pool1 = _mpool(conv1,  3, 3, 2, 2)
@@ -161,6 +169,14 @@ def inference(images):
 
 def train():
   global parameters
+
+  # Change format to NCHW if that is the data format passed or CP
+  if FLAGS.data_format == 'NHWC' or FLAGS.device_id == -1:
+    global data_format, data_format_c
+    data_format = 'NHWC'
+    data_format_c = 'channels_last'
+
+
   config = tf.ConfigProto(allow_soft_placement=True, log_device_placement=FLAGS.log_device_placement)
   config.intra_op_parallelism_threads = 1
   config.inter_op_parallelism_threads = 0
@@ -175,10 +191,10 @@ def train():
       labels = None
       with tf.device('/cpu:0'):
         if FLAGS.use_dataset:
-          iterator, initalizer =  cifar10_input.dataSet(FLAGS.data_dir, FLAGS.batch_size)
+          iterator, initalizer =  cifar10_input.dataSet(FLAGS.data_dir, FLAGS.batch_size, data_format=data_format)
           images, labels = iterator.get_next()
         else:
-          images, labels = cifar10_input.inputs(False, FLAGS.data_dir, FLAGS.batch_size)
+          images, labels = cifar10_input.inputs(False, FLAGS.data_dir, FLAGS.batch_size, data_format=data_format)
 
       labels = tf.contrib.layers.one_hot_encoding(labels, 10)
       logits = inference(images)
