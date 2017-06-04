@@ -46,6 +46,7 @@ def train():
   global parameters
   data_format = FLAGS.data_format
   config = tf.ConfigProto(allow_soft_placement=True, log_device_placement=FLAGS.log_device_placement)
+  #config.gpu_options.force_gpu_compatible = 1
   device_id = FLAGS.device_id
   if int(device_id) >= 0:
       device_str = '/gpu:%d'%int(device_id)

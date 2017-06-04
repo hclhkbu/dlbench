@@ -258,7 +258,7 @@ def dataSet(data_dir, batch_size, data_format='NCHW', device='gpu'):
   images, labels = data.read_data_files()
   images = tf.cast(images, tf.float32)
   labels = tf.cast(labels, tf.int32)
-  # Reshape the images to break into channels and height and withh
+  # Reshape the images to break into channels and height and with
   images = tf.reshape(images,[50000, 3, 32, 32])
   if data_format == 'NHWC':
     images = tf.transpose(images, [0, 2, 3, 1])
@@ -268,7 +268,7 @@ def dataSet(data_dir, batch_size, data_format='NCHW', device='gpu'):
   if 'cpu' in device.lower():
     dataset = dataset.map(lambda x,y:(x,y),num_threads=1,output_buffer_size=batch_size)
   else:
-    dataset = dataset.map(lambda x,y:(x,y),num_threads=8,output_buffer_size=batch_size)
+    dataset = dataset.map(lambda x,y:(x,y),num_threads=2,output_buffer_size=batch_size)
   dataset = dataset.repeat()
   dataset = dataset.shuffle(buffer_size=50000)
   dataset = dataset.batch(batch_size)

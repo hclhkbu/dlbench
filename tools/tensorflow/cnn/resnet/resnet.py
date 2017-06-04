@@ -1,5 +1,3 @@
-import skimage.io  # bug. need to import this before tensorflow
-import skimage.transform  # bug. need to import this before tensorflow
 import tensorflow as tf
 from tensorflow.python.ops import control_flow_ops
 from tensorflow.python.training import moving_averages
@@ -25,8 +23,6 @@ FC_WEIGHT_DECAY = 0.0001
 FC_WEIGHT_STDDEV = 0.01
 RESNET_VARIABLES = 'resnet_variables'
 UPDATE_OPS_COLLECTION = 'resnet_update_ops'  # must be grouped with training op
-
-tf.app.flags.DEFINE_integer('input_size', 32, "input image size")
 
 
 activation = tf.nn.relu
@@ -187,7 +183,7 @@ def bn(x, c):
                              initializer=tf.zeros_initializer())
         return x + bias
 
-    batch_norm_config = {'decay': 0.999, 'epsilon': 1e-5, 'scale': True,
+    batch_norm_config = {'decay': 0.9, 'epsilon': 1e-5, 'scale': True,
                          'center': True}
                          
     x = tf.contrib.layers.batch_norm(x, 
@@ -243,11 +239,11 @@ def conv(x, c):
     filters_out = c['conv_filters_out']
 
     kernel_initializer = tf.truncated_normal_initializer(stddev=CONV_WEIGHT_STDDEV)
-    biases = _get_variable("biases",
-                           shape=[filters_out],
-                           initializer=tf.constant_initializer(), 
-                           trainable=True,
-                           weight_decay=CONV_WEIGHT_DECAY)
+    #biases = _get_variable("biases",
+    ##                       shape=[filters_out],
+     #                      initializer=tf.constant_initializer(), 
+     #                      trainable=True,
+     #                      weight_decay=CONV_WEIGHT_DECAY)
 
     c = tf.layers.conv2d(x,
                          filters_out,
@@ -257,9 +253,9 @@ def conv(x, c):
                          data_format=DATA_FORMAT_C,
                          kernel_initializer=kernel_initializer,
                          use_bias=False)
-    bias = tf.reshape(tf.nn.bias_add(c, biases, data_format=DATA_FORMAT),
-                      c.get_shape())
-    return bias
+    #bias = tf.reshape(tf.nn.bias_add(c, biases, data_format=DATA_FORMAT),
+    #                  c.get_shape())
+    return c
 
 
 def _max_pool(x, ksize=3, stride=2):
