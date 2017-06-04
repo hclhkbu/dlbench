@@ -239,12 +239,6 @@ def conv(x, c):
     filters_out = c['conv_filters_out']
 
     kernel_initializer = tf.truncated_normal_initializer(stddev=CONV_WEIGHT_STDDEV)
-    #biases = _get_variable("biases",
-    ##                       shape=[filters_out],
-     #                      initializer=tf.constant_initializer(), 
-     #                      trainable=True,
-     #                      weight_decay=CONV_WEIGHT_DECAY)
-
     c = tf.layers.conv2d(x,
                          filters_out,
                          [ksize,ksize],
@@ -253,8 +247,6 @@ def conv(x, c):
                          data_format=DATA_FORMAT_C,
                          kernel_initializer=kernel_initializer,
                          use_bias=False)
-    #bias = tf.reshape(tf.nn.bias_add(c, biases, data_format=DATA_FORMAT),
-    #                  c.get_shape())
     return c
 
 
