@@ -1,7 +1,7 @@
 RootDir = "."
 
 ConfigDir = "$RootDir$"
-DataDir = "/home/comp/csshshi/data/cntk/cifar10"
+DataDir = "/home/comp/pengfeixu/data/cntk/cifar10"
 #DataDir = "/home/comp/pengfeixu/Data/cntk/cifar10"
 #DataDir = "/home/ipdps/Data/cntk/cifar10"
 OutputDir = "$RootDir$/Output"

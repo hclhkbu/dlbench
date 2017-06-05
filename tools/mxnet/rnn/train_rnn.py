@@ -1,161 +1,226 @@
-"""A simple demo of new RNN cell with PTB language model."""
+from common import find_mxnet
+import numpy as np
 import os
+import mxnet as mx
 import argparse
 
-import numpy as np
-import mxnet as mx
+parser = argparse.ArgumentParser(description="Train RNN on Penn Tree Bank",
+                                 formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+parser.add_argument('--data-dir', type=str, help='the input data directory')
 
-from bucket_io import MyBucketSentenceIter, BucketSentenceIter, default_build_vocab
+parser.add_argument('--sequence-lens', type=str, default="32", help='the sequence lengths, e.g "8,16,32,64,128"')
+parser.add_argument('--num-examples', type=str, help='Flag for consistancy, no use in rnn')
+parser.add_argument('--test', default=False, action='store_true',
+                    help='whether to do testing instead of training')
+parser.add_argument('--model-prefix', type=str, default=None,
+                    help='path to save/load model')
+parser.add_argument('--load-epoch', type=int, default=0,
+                    help='load from epoch')
+parser.add_argument('--num-layers', type=int, default=2,
+                    help='number of stacked RNN layers')
+parser.add_argument('--num-hidden', type=int, default=256,
+                    help='hidden layer size')
+parser.add_argument('--num-embed', type=int, default=256,
+                    help='embedding layer size')
+parser.add_argument('--bidirectional', type=bool, default=False,
+                    help='whether to use bidirectional layers')
+parser.add_argument('--gpus', type=str,
+                    help='list of gpus to run, e.g. 0 or 0,2,5. empty means using cpu. ' \
+                         'Increase batch size when using multiple gpus for best performance.')
+parser.add_argument('--kv-store', type=str, default='device',
+                    help='key-value store type')
+parser.add_argument('--num-epochs', type=int, default=25,
+                    help='max num of epochs')
+parser.add_argument('--lr', type=float, default=0.01,
+                    help='initial learning rate')
+parser.add_argument('--optimizer', type=str, default='sgd',
+                    help='the optimizer type')
+parser.add_argument('--mom', type=float, default=0.0,
+                    help='momentum for sgd')
+parser.add_argument('--wd', type=float, default=0.00001,
+                    help='weight decay for sgd')
+parser.add_argument('--batch-size', type=int, default=128,
+                    help='the batch size.')
+parser.add_argument('--disp-batches', type=int, default=50,
+                    help='show progress for every n batches')
+parser.add_argument('--stack-rnn', default=False,
+                    help='stack fused RNN cells to reduce communication overhead')
+parser.add_argument('--dropout', type=float, default='0.0',
+                    help='dropout probability (1.0 - keep probability)')
+
+args = parser.parse_args()
+#buckets = [64]
+buckets = [int(i) for i in args.sequence_lens.split(',')]
+
+start_label = 1
+invalid_label = 0
+
+data_dir = os.environ["HOME"] + "/data/mxnet/ptb/" if args.data_dir is None else args.data_dir
+
+def tokenize_text(fname, vocab=None, invalid_label=-1, start_label=0):
+    lines = open(fname).readlines()
+    lines = [filter(None, i.split(' ')) for i in lines]
+    sentences, vocab = mx.rnn.encode_sentences(lines, vocab=vocab, invalid_label=invalid_label, start_label=start_label)
+    return sentences, vocab
+
+def get_data(layout):
+    train_sent, vocab = tokenize_text(data_dir + "ptb.train.txt", start_label=start_label,
+                                      invalid_label=invalid_label)
+    val_sent, _ = tokenize_text(data_dir + "ptb.test.txt", vocab=vocab, start_label=start_label,
+                                invalid_label=invalid_label)
+
+    data_train  = mx.rnn.BucketSentenceIter(train_sent, args.batch_size, buckets=buckets, invalid_label=invalid_label, layout=layout)
+    data_val    = mx.rnn.BucketSentenceIter(val_sent, args.batch_size, buckets=buckets, invalid_label=invalid_label, layout=layout)
+    return data_train, data_val, vocab
 
 
-#os.environ["MXNET_CUDNN_AUTOTUNE_DEFAULT"] = "1"
+def train(args):
+    data_train, data_val, vocab = get_data('TN')
 
-#data_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), 'data'))
-
-
-def Perplexity(label, pred):
-    # collapse the time, batch dimension
-    label = label.reshape((-1,))
-    pred = pred.reshape((-1, pred.shape[-1]))
-
-    loss = 0.
-    for i in range(pred.shape[0]):
-        loss += -np.log(max(1e-10, pred[i][int(label[i])]))
-    return np.exp(loss / label.size)
-
-
-if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='train rnn lstm with ptb')
-    parser.add_argument('--data-dir', type=str, help='the input data directory')
-    parser.add_argument('--gpus', type=str,
-                                help='the gpus will be used, e.g "0,1,2,3"')
-    parser.add_argument('--sequence-lens', type=str, default="32",
-                                help='the sequence lengths, e.g "8,16,32,64,128"')
-    parser.add_argument('--batch-size', type=int, default=128,
-                                help='the batch size')
-    parser.add_argument('--num-hidden', type=int, default=256,
-                                help='size of the state for each lstm layer')
-    parser.add_argument('--num-embed', type=int, default=256,
-                                help='dim of embedding')
-    parser.add_argument('--num-lstm-layer', type=int, default=2,
-                                help='the numebr of lstm layers')
-    parser.add_argument('--lr', type=float, default=0.01,
-                                help='learning rate')
-    parser.add_argument('--model-prefix', type=str,
-                                help='the prefix of the model to load')
-    parser.add_argument('--num-examples', type=str,
-                                help='Flag for consistancy, no use in rnn')
-    parser.add_argument('--save-model-prefix', type=str,
-                                help='the prefix of the model to save')
-    parser.add_argument('--num-epochs', type=int, default=20,
-                                help='the number of training epochs')
-    parser.add_argument('--load-epoch', type=int,
-                                help='load the model on an epoch using the model-prefix')
-    parser.add_argument('--kv-store', type=str, default='local',
-                                help='the kvstore type')
-    args = parser.parse_args()
-
-    data_dir = os.environ['HOME'] + "/data/mxnet/ptb/" if args.data_dir is None else args.data_dir
-    batch_size = args.batch_size  
-    #buckets = [64] #[10, 20, 30, 40, 50, 60]
-    buckets = [int(i) for i in args.sequence_lens.split(',')] #[8,16,32,64,128] 
-    num_hidden = args.num_hidden
-    num_embed = args.num_embed
-    num_lstm_layer = args.num_lstm_layer 
-
-    num_epoch = args.num_epochs
-    learning_rate = args.lr
-    momentum = 0.0
-
-    contexts = mx.context.cpu() if args.gpus is None else [mx.context.gpu(int(i)) for i in args.gpus.split(',')]
-    vocab = default_build_vocab(os.path.join(data_dir, 'ptb.train.txt'))
-    print("Size of ptb.train.txt vocab: " + str(len(vocab)))
-
-    init_h = [('LSTM_state', (num_lstm_layer, batch_size, num_hidden))]
-    init_c = [('LSTM_state_cell', (num_lstm_layer, batch_size, num_hidden))]
-    init_states = init_c + init_h
-
-    data_train = MyBucketSentenceIter(os.path.join(data_dir, 'ptb.train.txt'),
-                                    vocab, buckets, batch_size, init_states,
-                                    time_major=True)
-    data_val = MyBucketSentenceIter(os.path.join(data_dir, 'ptb.valid.txt'),
-                                  vocab, buckets, batch_size, init_states,
-                                  time_major=True)
     sample_size = 0
     for x in data_train.data:
         sample_size += len(x)
     print("len of data train===================== " + str(sample_size))
+
+    if args.stack_rnn:
+        cell = mx.rnn.SequentialRNNCell()
+        for i in range(args.num_layers):
+            cell.add(mx.rnn.FusedRNNCell(args.num_hidden, num_layers=1,
+                                         mode='lstm', prefix='lstm_l%d'%i,
+                                         bidirectional=args.bidirectional))
+            if args.dropout > 0 and i < args.num_layers - 1:
+                cell.add(mx.rnn.DropoutCell(args.dropout, prefix='lstm_d%d'%i))
+    else:
+        cell = mx.rnn.FusedRNNCell(args.num_hidden, num_layers=args.num_layers, dropout=args.dropout,
+                                   mode='lstm', bidirectional=args.bidirectional)
+
+    def sym_gen(seq_len):
+        data = mx.sym.Variable('data')
+        label = mx.sym.Variable('softmax_label')
+        embed = mx.sym.Embedding(data=data, input_dim=len(vocab), output_dim=args.num_embed,name='embed')
+
+        output, _ = cell.unroll(seq_len, inputs=embed, merge_outputs=True, layout='TNC')
+
+        pred = mx.sym.Reshape(output,
+                shape=(-1, args.num_hidden*(1+args.bidirectional)))
+        pred = mx.sym.FullyConnected(data=pred, num_hidden=len(vocab), name='pred')
+
+        label = mx.sym.Reshape(label, shape=(-1,))
+        pred = mx.sym.SoftmaxOutput(data=pred, label=label, name='softmax')
+
+        return pred, ('data',), ('softmax_label',)
+
+    if args.gpus:
+        contexts = [mx.gpu(int(i)) for i in args.gpus.split(',')]
+    else:
+        contexts = mx.cpu(0)
+
+    model = mx.mod.BucketingModule(
+        sym_gen             = sym_gen,
+        default_bucket_key  = data_train.default_bucket_key,
+        context             = contexts)
+
+    if args.load_epoch:
+        _, arg_params, aux_params = mx.rnn.load_rnn_checkpoint(
+            cell, args.model_prefix, args.load_epoch)
+    else:
+        arg_params = None
+        aux_params = None
+
+    opt_params = {
+      'learning_rate': args.lr,
+      'wd': args.wd,
+      'clip_gradient': 5.0
+    }
+
+    if args.optimizer not in ['adadelta', 'adagrad', 'adam', 'rmsprop']:
+        opt_params['momentum'] = args.mom
+    print str(int((sample_size-args.batch_size)/args.batch_size))
+    model.fit(
+        train_data          = data_train,
+        eval_data           = data_val,
+        eval_metric         = mx.metric.Perplexity(invalid_label),
+        kvstore             = args.kv_store,
+        optimizer           = args.optimizer,
+        optimizer_params    = opt_params, 
+        #initializer         = mx.init.Xavier(factor_type="in", magnitude=2.34),
+        #initializer         = mx.initializer.Uniform(scale=0.1),
+        initializer         = mx.init.Uniform(scale=0.1),
+        arg_params          = arg_params,
+        aux_params          = aux_params,
+        begin_epoch         = args.load_epoch,
+        num_epoch           = args.num_epochs,
+        #batch_end_callback  = mx.callback.Speedometer(args.batch_size, args.disp_batches),
+        batch_end_callback  = mx.callback.Speedometer(args.batch_size, int((sample_size-args.batch_size)/args.batch_size) - 1),
+        epoch_end_callback  = mx.rnn.do_rnn_checkpoint(cell, args.model_prefix, 1)
+                              if args.model_prefix else None)
+
+def test(args):
+    assert args.model_prefix, "Must specifiy path to load from"
+    _, data_val, vocab = get_data('NT')
+
+    if not args.stack_rnn:
+        stack = mx.rnn.FusedRNNCell(args.num_hidden, num_layers=args.num_layers,
+                mode='lstm', bidirectional=args.bidirectional).unfuse()
+    else:
+        stack = mx.rnn.SequentialRNNCell()
+        for i in range(args.num_layers):
+            cell = mx.rnn.LSTMCell(num_hidden=args.num_hidden, prefix='lstm_%dl0_'%i)
+            if args.bidirectional:
+                cell = mx.rnn.BidirectionalCell(
+                        cell,
+                        mx.rnn.LSTMCell(num_hidden=args.num_hidden, prefix='lstm_%dr0_'%i),
+                        output_prefix='bi_lstm_%d'%i)
+            stack.add(cell)
+
     def sym_gen(seq_len):
         data = mx.sym.Variable('data')
         label = mx.sym.Variable('softmax_label')
         embed = mx.sym.Embedding(data=data, input_dim=len(vocab),
-                                 output_dim=num_embed, name='embed')
+                                 output_dim=args.num_embed, name='embed')
 
-        # TODO(tofix)
-        # currently all the LSTM parameters are concatenated as
-        # a huge vector, and named '<name>_parameters'. By default
-        # mxnet initializer does not know how to initilize this
-        # guy because its name does not ends with _weight or _bias
-        # or anything familiar. Here we just use a temp workaround
-        # to create a variable and name it as LSTM_bias to get
-        # this demo running. Note by default bias is initialized
-        # as zeros, so this is not a good scheme. But calling it
-        # LSTM_weight is not good, as this is 1D vector, while
-        # the initialization scheme of a weight parameter needs
-        # at least two dimensions.
-        rnn_params = mx.sym.Variable('LSTM_bias')
+        stack.reset()
+        outputs, states = stack.unroll(seq_len, inputs=embed, merge_outputs=True)
 
-        # RNN cell takes input of shape (time, batch, feature)
-        rnn = mx.sym.RNN(data=embed, state_size=num_hidden,
-                         num_layers=num_lstm_layer, mode='lstm',
-                         name='LSTM', 
-                         # The following params can be omitted
-                         # provided we do not need to apply the
-                         # workarounds mentioned above
-                         parameters=rnn_params)
+        pred = mx.sym.Reshape(outputs,
+                shape=(-1, args.num_hidden*(1+args.bidirectional)))
+        pred = mx.sym.FullyConnected(data=pred, num_hidden=len(vocab), name='pred')
 
-        # the RNN cell output is of shape (time, batch, dim)
-        # if we need the states and cell states in the last time
-        # step (e.g. when building encoder-decoder models), we
-        # can set state_outputs=True, and the RNN cell will have
-        # extra outputs: rnn['LSTM_output'], rnn['LSTM_state']
-        # and for LSTM, also rnn['LSTM_state_cell']
+        label = mx.sym.Reshape(label, shape=(-1,))
+        pred = mx.sym.SoftmaxOutput(data=pred, label=label, name='softmax')
 
-        # now we collapse the time and batch dimension to do the
-        # final linear logistic regression prediction
-        hidden = mx.sym.Reshape(data=rnn, shape=(-1, num_hidden))
+        return pred, ('data',), ('softmax_label',)
 
-        pred = mx.sym.FullyConnected(data=hidden, num_hidden=len(vocab),
-                                     name='pred')
-
-        # reshape to be of compatible shape as labels
-        pred_tm = mx.sym.Reshape(data=pred, shape=(seq_len, -1, len(vocab)))
-
-        sm = mx.sym.SoftmaxOutput(data=pred_tm, label=label, preserve_shape=True,
-                                  name='softmax')
-
-        data_names = ['data', 'LSTM_state', 'LSTM_state_cell']
-        label_names = ['softmax_label']
-
-        return (sm, data_names, label_names)
-
-    if len(buckets) == 1:
-        mod = mx.mod.Module(*sym_gen(buckets[0]), context=contexts)
+    if args.gpus:
+        contexts = [mx.gpu(int(i)) for i in args.gpus.split(',')]
     else:
-        mod = mx.mod.BucketingModule(sym_gen, 
-                                     default_bucket_key=data_train.default_bucket_key,
-                                     context=contexts)
+        contexts = mx.cpu(0)
 
-    print(args)
-    print("Start training...")
+    model = mx.mod.BucketingModule(
+        sym_gen             = sym_gen,
+        default_bucket_key  = data_val.default_bucket_key,
+        context             = contexts)
+    model.bind(data_val.provide_data, data_val.provide_label, for_training=False)
+
+    # note here we load using SequentialRNNCell instead of FusedRNNCell.
+    _, arg_params, aux_params = mx.rnn.load_rnn_checkpoint(stack, args.model_prefix, args.load_epoch)
+    model.set_params(arg_params, aux_params)
+
+    model.score(data_val, mx.metric.Perplexity(invalid_label),
+                batch_end_callback=mx.callback.Speedometer(args.batch_size, 5))
+
+if __name__ == '__main__':
     import logging
     head = '%(asctime)-15s %(message)s'
     logging.basicConfig(level=logging.DEBUG, format=head)
 
-    mod.fit(data_train, eval_data=data_val, num_epoch=num_epoch,
-            eval_metric=mx.metric.np(Perplexity),
-            batch_end_callback=mx.callback.Speedometer(batch_size, int((sample_size-1)/batch_size)),
-            #initializer=mx.init.Xavier(factor_type="in", magnitude=2.34),
-            initializer=mx.init.Uniform(scale=0.1),
-            optimizer='sgd',
-	    optimizer_params={'learning_rate': learning_rate, 'momentum': momentum, 'wd': 0.00001, 'clip_gradient': 5.0})
+
+    if args.num_layers >= 4 and len(args.gpus.split(',')) >= 4 and not args.stack_rnn:
+        print('WARNING: stack-rnn is recommended to train complex model on multiple GPUs')
+
+    if args.test:
+        # Demonstrates how to load a model trained with CuDNN RNN and predict
+        # with non-fused MXNet symbol
+        test(args)
+    else:
+        train(args)

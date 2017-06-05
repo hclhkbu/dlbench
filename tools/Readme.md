@@ -25,7 +25,7 @@
 |     -debug     | Boolean value, true for debugging this script.                                                     | False                                            |
 \*If host file is not none, training process will run on multiple nodes as defined in the host file. Some tools have to run extra code in order to initiate multi-machine training environment. This parameter is also used to determin whether to launch extra code or not.   
 
-###Output
+### Output
 -  \<your tool name>bm.py should print out the running result which will be taken by benchmark.py and post to the server, and the format of the result is:
 ```
 -t $totalTimeInSecond -a $averageMiniBatchTimeInSecond -I $lossValueOfEachEpoch
@@ -34,8 +34,9 @@ Example of *$lossValueOfEachEpoch* (There are 4 epochs' item, and splitted by `,
 ```
 0:-:2.32620807,1:-:2.49505453,2:-:2.30122152,3:-:2.30028142
 ```
-###Benchmark procedure    
-#### 1. Build cmd.   
+### Benchmark procedure
+#### 1. Build cmd.
+
 - In order to make this framework be competible with different types of deep learinig tools written in different languages, <tool>bm.py is only an interface that standardize the input and output. You need to use arguments above to determine the variable cmd, and it will be executed in a subshell by calling `os.system(cmd)` during which a log file must be genrated containing necessary information for post processing. Some tools will generate a log file automatically, if not redirect all stdout and stderr to the log file. The name of log file ends with ".log". Here are some examples of cmd:   
 Caffe: `caffe train -solver=fcn5-b1024-GPU-solver1.prototxt -gpu=0 >& /root/dlbench/tools/caffe/fc/debug.log`   
 Mxnet: `cd fc; python train_mnist.py --lr 0.05 --batch-size 4096 --num-epochs 40 --num-examples 60000 --gpus 1 --kv-store device >& mxnet_debug.log`    

@@ -6,15 +6,10 @@ label_dim = 10
 hidden_layer_dim = 2048
 num_minibatch = 100
 
-
-# Get random parameters initialized with a iniform distribution between -0.5 and 0.5
 def get_variable(name, shape, is_bias=False):
-    #return tf.get_variable(name, shape, initializer=tf.random_uniform_initializer(-0.5, 0.5))
     if is_bias:
-        #return tf.get_variable(name, shape, initializer=tf.random_uniform_initializer(0.1, 0.5))
-        return tf.get_variable(name, shape, initializer=tf.constant_initializer(0))
-    #return tf.get_variable(name, shape, initializer=tf.contrib.layers.xavier_initializer())
-    return tf.get_variable(name, shape, initializer=tf.contrib.layers.xavier_initializer())
+        return tf.get_variable(name, shape, initializer=tf.constant_initializer(0.1))
+    return tf.get_variable(name, shape, initializer=tf.truncated_normal_initializer(stddev=0.1))
 
 
 def sigmoid_DNN_layer(layer_idx, input, input_dim, output_dim):
@@ -50,7 +45,7 @@ def model_fcn8(features):
 
 
 def loss(logits, labels):
-    labels = tf.cast(labels, tf.float32)
+    labels = tf.to_int64(labels)
     cross_entropy = tf.nn.softmax_cross_entropy_with_logits(logits=logits, labels=labels)
     loss = tf.reduce_mean(cross_entropy, name='cross_entropy_mean')
     return loss

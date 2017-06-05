@@ -31,6 +31,9 @@ def print_arguments(info):
     #return '-t %.6f -a %.6f -I %s' % info 
 
 def extract_info_caffe(filename):
+    """
+    Use for caffe-rc5
+    """
     f = open(filename)
     content = f.readlines()
     useful_lines = []
@@ -42,20 +45,23 @@ def extract_info_caffe(filename):
     for index, line in enumerate(content):
         if line.find('Use CPU') > 0:
             is_cpu = True
-        if line.find('solver.cpp:228') > 0:
+        if line.find('solver.cpp:219') > 0:
             #interval += 1
             #if interval == 3 or is_fist:
             useful_lines.append(line)
             #interval = 0
             #is_fist = False
-        if line.find('solver.cpp:404]     Test net output #1:') > 0 or (is_cpu and line.find('Snapshotting to binary proto file ') > 0):
+        if (line.find('solver.cpp:398]     Test net output #1:') > 0 and len(useful_lines) > 0)or (is_cpu and line.find('Snapshotting to binary proto file ') > 0):
             if (not is_fist) or is_cpu:
-                iteration = content[index-3].split()[5].strip(',') 
+                if not is_cpu:
+                    iteration = content[index-5].split()[5].strip(',') 
+                else:
+                    iteration = content[index-7].split()[5].strip(',') 
                 accuracy = content[index-1].split()[-1]
                 #loss = content[index].split()[10]
                 #loss = content[index-6].split()[-1]
                 if content[index+1].find("Optimization Done") > 0: # last iter
-                    loss = content[index-6].split()[-1]
+                    loss = content[index-4].split()[-1]
                 else:
                     loss = content[index+1].split()[-1]
                 # Append (iteration, accuracy)
