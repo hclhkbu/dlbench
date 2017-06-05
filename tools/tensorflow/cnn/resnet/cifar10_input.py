@@ -19,8 +19,10 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
+import cPickle
 import os
 import six
+import numpy as np
 
 #from six.moves import xrange  # pylint: disable=redefined-builtin
 import tensorflow as tf
@@ -35,8 +37,55 @@ NUM_CLASSES = 10
 NUM_EXAMPLES_PER_EPOCH_FOR_TRAIN = 50000
 NUM_EXAMPLES_PER_EPOCH_FOR_EVAL = 10000
 
+FLAGS = tf.app.flags.FLAGS
 
-def read_cifar10(filename_queue):
+class Dataset(object):
+  """Abstract class for cnn benchmarks dataset."""
+
+  def __init__(self, name, height=None, width=None, depth=None, data_dir=None):
+    self.name = name
+    self.height = height
+    self.width = width
+    self.depth = depth or 3
+    self.data_dir = data_dir
+
+  def __str__(self):
+    return self.name
+
+class Cifar10Data(Dataset):
+  """Configuration for cifar 10 dataset.
+  It will mount all the input images to memory.
+  """
+
+  def __init__(self, data_dir=None):
+    if data_dir is None:
+      raise ValueError('Data directory not specified')
+    super(Cifar10Data, self).__init__('cifar10', 32, 32, data_dir=data_dir)
+
+  def read_data_files(self, subset='train'):
+    """Reads from data file and return images and labels in a numpy array."""
+    if subset == 'train':
+      filenames = [os.path.join(self.data_dir, 'data_batch_%d' % i)
+                   for i in xrange(1, 6)]
+    elif subset == 'validation':
+      filenames = [os.path.join(self.data_dir, 'test_batch')]
+    else:
+      raise ValueError('Invalid data subset "%s"' % subset)
+
+    inputs = []
+    for filename in filenames:
+      with open(filename, 'r') as f:
+        inputs.append(cPickle.load(f))
+    # See http://www.cs.toronto.edu/~kriz/cifar.html for a description of the
+    # input format.
+    all_images = np.concatenate(
+        [each_input['data'] for each_input in inputs]).astype(np.float32)
+    all_labels = np.concatenate(
+        [each_input['labels'] for each_input in inputs]).astype(np.int32)
+    return all_images, all_labels
+
+
+def read_cifar10(filename_queue, data_format):
   """Reads and parses examples from CIFAR10 data files.
 
   Recommendation: if you want N-way read parallelism, call this function
@@ -91,8 +140,11 @@ def read_cifar10(filename_queue):
   depth_major = tf.reshape(tf.slice(record_bytes, [label_bytes], [image_bytes]),
                            [result.depth, result.height, result.width])
   # Convert from [depth, height, width] to [height, width, depth].
-  result.uint8image = tf.transpose(depth_major, [1, 2, 0])
-
+  # Using CHW (NCHW) as the default so no need to transpose
+  if data_format == 'NHWC':
+    result.uint8image = tf.transpose(depth_major, [1, 2, 0])
+  else:
+    result.uint8image = depth_major
   return result
 
 
@@ -114,7 +166,7 @@ def _generate_image_and_label_batch(image, label, min_queue_examples,
   """
   # Create a queue that shuffles the examples, and then
   # read 'batch_size' images + labels from the example queue.
-  num_preprocess_threads = 16 
+  num_preprocess_threads = 8 
   if shuffle:
     images, label_batch = tf.train.shuffle_batch(
         [image, label],
@@ -193,8 +245,45 @@ def distorted_inputs(data_dir, batch_size):
                                          min_queue_examples, batch_size,
                                          shuffle=True)
 
+# Exampe of how to pass to function dataset.map if doing
+# distortions or other work.
+#def _parse_function(image, label):
+  #image = tf.reshape(image,[3, 32, 32])
+  #image = tf.transpose(image, [1, 2, 0])
+#  return image, label
 
-def inputs(eval_data, data_dir, batch_size):
+
+def dataSet(data_dir, batch_size, data_format='NCHW', device='gpu'):
+  data = Cifar10Data(data_dir=data_dir)
+  images, labels = data.read_data_files()
+  images = tf.cast(images, tf.float32)
+  labels = tf.cast(labels, tf.int32)
+  # Reshape the images to break into channels and height and with
+  images = tf.reshape(images,[50000, 3, 32, 32])
+  if data_format == 'NHWC':
+    images = tf.transpose(images, [0, 2, 3, 1])
+  
+  dataset = tf.contrib.data.Dataset.from_tensor_slices((images, labels))
+  # Indicates CPU is being used and less threads are needed
+  if 'cpu' in device.lower():
+    dataset = dataset.map(lambda x,y:(x,y),num_threads=1,output_buffer_size=batch_size)
+  else:
+    dataset = dataset.map(lambda x,y:(x,y),num_threads=2,output_buffer_size=batch_size)
+  dataset = dataset.repeat()
+  dataset = dataset.shuffle(buffer_size=50000)
+  dataset = dataset.batch(batch_size)
+  
+  # Needed to let rest of the graph know the shape of the data
+  images_shape = [batch_size, 3, 32, 32]
+  if data_format == 'NHWC':
+    images_shape = [batch_size, 32, 32, 3]
+  iterator = tf.contrib.data.Iterator.from_structure((tf.float32,tf.int32),
+                                                     (images_shape, [batch_size,]))
+  initializer = iterator.make_initializer(dataset)
+  return iterator,initializer
+
+
+def inputs(eval_data, data_dir, batch_size, data_format='NCHW'):
   """Construct input for CIFAR evaluation using the Reader ops.
 
   Args:
@@ -224,19 +313,22 @@ def inputs(eval_data, data_dir, batch_size):
   filename_queue = tf.train.string_input_producer(filenames)
 
   # Read examples from files in the filename queue.
-  read_input = read_cifar10(filename_queue)
+  read_input = read_cifar10(filename_queue, data_format=data_format)
   reshaped_image = tf.cast(read_input.uint8image, tf.float32)
 
   height = IMAGE_SIZE
   width = IMAGE_SIZE
 
+  # If processing images without any manipulation then there
+  # is no need to resize or do per_image_standardization.
+
   # Image processing for evaluation.
   # Crop the central [height, width] of the image.
-  resized_image = tf.image.resize_image_with_crop_or_pad(reshaped_image,
-                                                         width, height)
+  #resized_image = tf.image.resize_image_with_crop_or_pad(reshaped_image,
+  #                                                       width, height)
 
   # Subtract off the mean and divide by the variance of the pixels.
-  float_image = tf.image.per_image_standardization(resized_image) 
+  #float_image = tf.image.per_image_standardization(resized_image) 
 
   # Ensure that the random shuffling has good mixing properties.
   min_fraction_of_examples_in_queue = 0.4
@@ -245,6 +337,6 @@ def inputs(eval_data, data_dir, batch_size):
   print('min_queue_examples: ', min_queue_examples)
 
   # Generate a batch of images and labels by building up a queue of examples.
-  return _generate_image_and_label_batch(float_image, read_input.label,
+  return _generate_image_and_label_batch(reshaped_image, read_input.label,
                                          min_queue_examples, batch_size,
                                          shuffle=shuffle)
