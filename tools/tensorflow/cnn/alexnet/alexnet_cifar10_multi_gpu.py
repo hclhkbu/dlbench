@@ -36,11 +36,14 @@ tf.app.flags.DEFINE_boolean('use_fp16', False,
 tf.app.flags.DEFINE_boolean('log_device_placement', True,
                             """Whether to log device placement.""")
 tf.app.flags.DEFINE_integer('num_gpus', 2, """How many GPUs to use.""")
-tf.app.flags.DEFINE_string('local_ps_device', 'GPU:0', """Local parameter server GPU:0 if gpus are peered or CPU:0 otherwise try both.""")
+tf.app.flags.DEFINE_string('local_ps_device', 'GPU', """Local parameter server GPU if gpus are peered or CPU otherwise try both.""")
+tf.app.flags.DEFINE_boolean('use_dataset', False, """True to use datasets""")
 
 EPOCH_SIZE = 50000
 TEST_SIZE = 10000
 
+data_format = 'NCHW'
+data_format_c = 'channels_first'
 
 def _init_global_variables():
     global conv_counter
@@ -57,20 +60,24 @@ def _init_global_variables():
 
 def _conv(inpOp, nIn, nOut, kH, kW, dH, dW, padType):
     global conv_counter
-    global parameters
     name = 'conv' + str(conv_counter)
     conv_counter += 1
-    with tf.variable_scope(name) as scope:
-        #kernel = tf.get_variable(name='weights', initializer=tf.random_normal([kH, kW, nIn, nOut], dtype=tf.float32, stddev=1e-2))
-        kernel = tf.get_variable(name='weights', shape=[kH, kW, nIn, nOut], initializer=tf.truncated_normal_initializer(dtype=tf.float32, stddev=1e-2))
-        strides = [1, dH, dW, 1]
-        conv = tf.nn.conv2d(inpOp, kernel, strides, padding=padType)
-        #biases = tf.Variable(tf.constant(0.0, shape=[nOut], dtype=tf.float32),
-        #                     trainable=True, name='biases')
-        biases = tf.get_variable(name='biases', initializer=tf.constant(0.0, shape=[nOut], dtype=tf.float32), dtype=tf.float32)
-        bias = tf.reshape(tf.nn.bias_add(conv, biases),
+    with tf.variable_scope(name):
+        kernel_initializer = tf.truncated_normal_initializer(stddev=1e-2)
+        conv = tf.layers.conv2d(inpOp,
+                        nOut, 
+                        [kH, kW],
+                        strides=[dH, dW],
+                        padding=padType,
+                        data_format=data_format_c,
+                        kernel_initializer=kernel_initializer,
+                        use_bias=False)
+        biases = tf.get_variable(
+                        'biases', [nOut], tf.float32,
+                        tf.constant_initializer(0.0))
+
+        bias = tf.reshape(tf.nn.bias_add(conv, biases, data_format=data_format),
                           conv.get_shape())
-        parameters += [kernel, biases]
         return bias
 
 
@@ -79,13 +86,8 @@ def _relu(inpOp):
 
 
 def _padding(inpOp, pad):
-    global pad_counter 
-    name = 'pad' + str(pad_counter)
-    pad_counter += 1
-    with tf.name_scope(name) as scope:
-        padded_input = tf.pad(inpOp, [[0, 0], [pad, pad], [pad, pad], [0, 0]], "CONSTANT", name='pad')
-        print('padded_input: ', padded_input)
-        return padded_input
+    padded_input = tf.pad(inpOp, [[0, 0], [0, 0], [pad, pad], [pad, pad]], "CONSTANT")
+    return padded_input
 
 
 def _norm(inpOp, local_size, alpha, beta):
@@ -100,51 +102,41 @@ def _affine(inpOp, nIn, nOut):
     global parameters
     name = 'affine' + str(affine_counter)
     affine_counter += 1
-    with tf.variable_scope(name) as scope:
-        #kernel = tf.get_variable(name='weights', initializer=tf.random_normal([nIn, nOut],
-        #                                         dtype=tf.float32,
-        #                                         stddev=1e-2))
-        kernel = tf.get_variable(name='weights', shape=[nIn, nOut], initializer=tf.truncated_normal_initializer(dtype=tf.float32,
-                                                 stddev=1e-2))
-        biases = tf.get_variable(name='biases', shape=[nOut], initializer=tf.constant_initializer())
-        affine1 = tf.nn.relu_layer(inpOp, kernel, biases, name=name)
-        parameters += [kernel, biases]
-        return affine1
+    with tf.name_scope(name) as scope:
+        kernel = tf.get_variable(
+            'weights', [nIn, nOut],
+            tf.float32,
+            tf.truncated_normal_initializer(stddev=1e-2))
+        biases = tf.get_variable('biases', [nOut],
+                                 tf.float32,
+                                 tf.constant_initializer(0.1))
+        logits = tf.matmul(inpOp, kernel) + biases
+        return tf.nn.relu(logits, name=name)
 
 def _mpool(inpOp, kH, kW, dH, dW):
     global pool_counter
     global parameters
     name = 'pool' + str(pool_counter)
     pool_counter += 1
-    ksize = [1, kH, kW, 1]
-    strides = [1, dH, dW, 1]
-    return tf.nn.max_pool(inpOp,
-                          ksize=ksize,
-                          strides=strides,
-                          padding='VALID',
-                          name=name)
+    return tf.layers.max_pooling2d(
+        inpOp, [kH, kW], [dH, dW],
+        padding='VALID',
+        data_format=data_format_c,
+        name=name)    
 
 def _avgpool(inpOp, kH, kW, dH, dW):
     global pool_counter
     name = 'pool' + str(pool_counter)
     pool_counter += 1
-    ksize = [1, kH, kW, 1]
-    strides = [1, dH, dW, 1]
-    return tf.nn.avg_pool(inpOp,
-                          ksize=ksize,
-                          strides=strides,
-                          padding='VALID',
-                          name=name)
+    return tf.layers.average_pooling2d(
+        inpOp, [kH, kW], [dH, dW],
+        padding='VALID',
+        data_format=data_format_c,
+        name=name)
 
 def loss_function(logits, labels):
-    batch_size = tf.size(labels)
-    labels = tf.expand_dims(labels, 1)
-    indices = tf.expand_dims(tf.range(0, batch_size, 1), 1)
-    concated = tf.concat(axis=1, values=[indices, labels])
-    onehot_labels = tf.sparse_to_dense(
-        concated, tf.stack([batch_size, 10]), 1.0, 0.0)
     cross_entropy = tf.nn.softmax_cross_entropy_with_logits(logits=logits,
-                                                            labels=onehot_labels,
+                                                            labels=labels,
                                                             name='xentropy')
     loss = tf.reduce_mean(cross_entropy, name='xentropy_mean')
     return loss
@@ -157,8 +149,8 @@ def inference(images):
     #norm1 = _norm(relu1, 3, 5e-05, 0.75)
 
     pad2 = _padding(relu1, 2)
-    conv2 = _conv (pad2,  32, 32, 5, 5, 1, 1, 'VALID')
-    pool2 = _mpool(conv2,  3, 3, 2, 2)
+    conv2 = _conv (pad2, 32, 32, 5, 5, 1, 1, 'VALID')
+    pool2 = _mpool(conv2, 3, 3, 2, 2)
     relu2 = _relu(pool2)
     #norm2 = _norm(relu2, 3, 5e-05, 0.75)
 
@@ -166,7 +158,6 @@ def inference(images):
     conv3 = _conv (pad3,  32, 64, 5, 5, 1, 1, 'VALID')
     relu3 = _relu(conv3)
     pool3 = _avgpool(relu3, 3, 3, 2, 2) 
-    print('pool3: ', pool3)
 
     resh1 = tf.reshape(pool3, [-1, 64 * 3 * 3])
     affn1 = _affine(resh1, 64*3*3, 10)
@@ -187,25 +178,11 @@ def average_gradients(tower_grads):
        across all towers.
     """
     average_grads = []
-    for grad_and_vars in zip(*tower_grads):
-        # Note that each grad_and_vars looks like the following:
-        #   ((grad0_gpu0, var0_gpu0), ... , (grad0_gpuN, var0_gpuN))
-        grads = []
-        for g, _ in grad_and_vars:
-            # Add 0 dimension to the gradients to represent the tower.
-            expanded_g = tf.expand_dims(g, 0)
-
-            # Append on a 'tower' dimension which we will average over below.
-            grads.append(expanded_g)
-
-        # Average over the 'tower' dimension.
-        grad = tf.concat(axis=0, values=grads)
-        grad = tf.reduce_mean(grad, 0)
-
-        # Keep in mind that the Variables are redundant because they are shared
-        # across towers. So .. we will just return the first tower's pointer to
-        # the Variable.
-        v = grad_and_vars[0][1]
+    for single_grads in zip(*tower_grads):
+        grads = [g for g, _ in single_grads]
+        grad = tf.add_n(grads)
+        grad = tf.multiply(grad, 1.0/len(grads))
+        v = single_grads[0][1]
         grad_and_var = (grad, v)
         average_grads.append(grad_and_var)
     return average_grads
@@ -214,7 +191,9 @@ def average_gradients(tower_grads):
 def train():
     global parameters
     config = tf.ConfigProto(allow_soft_placement=True, log_device_placement=FLAGS.log_device_placement)
-    with tf.Graph().as_default(), tf.device("/" + FLAGS.local_ps_device):
+    config.intra_op_parallelism_threads = 1
+    config.inter_op_parallelism_threads = 0
+    with tf.Graph().as_default(), tf.device("/" + FLAGS.local_ps_device + ":0"):
         global_step = tf.get_variable('global_step', [], initializer=tf.constant_initializer(0), trainable=False)
 
         device_ids = FLAGS.device_ids
@@ -229,17 +208,33 @@ def train():
             return
 
         lr = 0.001
-        #optimizer = tf.train.GradientDescentOptimizer(lr)
         optimizer = tf.train.MomentumOptimizer(lr, 0.9)
 
-        def assign_to_device(device, ps_device="/" + FLAGS.local_ps_device):
+        def assign_to_device(device, ps_device=FLAGS.local_ps_device):
+            worker_device = device
+            ps_sizes = [0]
+            if FLAGS.local_ps_device.lower == 'gpu':
+                ps_sizes = [0] * FLAGS.num_gpus
             def _assign(op):
-                node_def = op if isinstance(op, tf.NodeDef) else op.node_def
-                if node_def.op == "Variable":
-                    return ps_device
-                else:
-                    return device
+                if op.device:
+                  return op.device
+                if op.type not in ['Variable', 'VariableV2']:
+                  return worker_device
+                device_index, _ = min(enumerate(
+                    ps_sizes), key=operator.itemgetter(1))
+                device_name = '/' + FLAGS.local_ps_device +':' + str(device_index)
+                var_size = op.outputs[0].get_shape().num_elements()
+                ps_sizes[device_index] += var_size
+                return device_name
             return _assign
+
+        images = None
+        labels = None
+        initalizer = None
+        if FLAGS.use_dataset:
+            with tf.device('/CPU:0'):
+                iterator, initalizer =  cifar10_input.dataSet(FLAGS.data_dir, FLAGS.batch_size)
+                images, labels = iterator.get_next()
 
         tower_grads = []
         average_loss_tensor = []
@@ -250,10 +245,11 @@ def train():
                 with tf.name_scope('%s_%s' % ('TOWER', device_ids[i])) as n_scope:
                     _init_global_variables()
                     with tf.device('/cpu:0'):
-                        images, labels = cifar10_input.inputs(False, FLAGS.data_dir, FLAGS.batch_size)
+                        if not FLAGS.use_dataset:
+                            images, labels = cifar10_input.inputs(False, FLAGS.data_dir, FLAGS.batch_size)
                     with tf.variable_scope(tf.get_variable_scope(), reuse=reuse_variables):    
                         logits = inference(images)
-                    loss = loss_function(logits, labels)
+                    loss = loss_function(logits, tf.contrib.layers.one_hot_encoding(labels, 10))
                     reuse_variables = True
 
                     average_loss_tensor.append(loss)
@@ -263,7 +259,7 @@ def train():
         grads = average_gradients(tower_grads)
         apply_gradient_op = optimizer.apply_gradients(grads, global_step=global_step)
         train_op = apply_gradient_op
-        average_op = tf.reduce_mean(average_loss_tensor, 0)
+        average_op = tf.reduce_mean(average_loss_tensor)
 
         # Create a saver.
         saver = tf.train.Saver(tf.global_variables())
@@ -271,8 +267,13 @@ def train():
         init = tf.global_variables_initializer()
         sess = tf.Session(config=config)
         sess.run(init)
-        coord = tf.train.Coordinator()
-        threads = tf.train.start_queue_runners(sess=sess, coord=coord)
+        coord = None
+        threads = None
+        if FLAGS.use_dataset:
+            sess.run(initalizer)
+        else:
+            coord = tf.train.Coordinator()
+            threads = tf.train.start_queue_runners(sess=sess, coord=coord)
 
         real_batch_size = FLAGS.batch_size * FLAGS.num_gpus
         num_batches_per_epoch = int((EPOCH_SIZE + real_batch_size - 1)/ real_batch_size)
@@ -284,7 +285,6 @@ def train():
         average_loss = 0.0
         for step in xrange(iterations):
             start_time = time.time()
-            #_, loss_v = sess.run([train_op, total_loss])
             _, loss_v = sess.run([train_op, average_op])
             duration = time.time() - start_time
             average_batch_time += float(duration)
@@ -307,8 +307,9 @@ def train():
         checkpoint_path = os.path.join(FLAGS.train_dir, 'model.ckpt')
         saver.save(sess, checkpoint_path, global_step=step)
 
-        coord.request_stop()
-        coord.join(threads)
+        if not FLAGS.use_dataset:
+            coord.request_stop()
+            coord.join(threads)
 
         average_batch_time /= iterations
         print 'average_batch_time: ', average_batch_time
@@ -316,6 +317,7 @@ def train():
 
 
 def main(_):
+    os.environ['TF_SYNC_ON_FINISH'] = '0'
     os.environ['TF_ENABLE_WINOGRAD_NONFUSED'] = '1'
     train()
 
