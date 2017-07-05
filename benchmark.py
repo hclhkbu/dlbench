@@ -30,7 +30,7 @@ if args.config is not None:
 		content = f.readlines()
 	#print content
 	for line in content:
-		line = line.split('#')[0].replace('\t','').replace('\n','')
+		line = line.split('#')[0].replace('\t','').replace('\n','').replace(' ', '')
 		if len(line) < 1 or "None" in line:
 			continue 
 		if not config_experiments:	

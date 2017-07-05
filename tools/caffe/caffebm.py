@@ -47,7 +47,7 @@ else:
 cmd += ' >& ' + log_path
 
 ## Execute cmd 
-print cmd # Debug
+#print cmd # Debug
 t = time.time()
 os.system(cmd)
 t = time.time() - t

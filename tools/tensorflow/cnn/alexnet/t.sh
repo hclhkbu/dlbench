@@ -7,6 +7,6 @@ CUDA_VISIBLE_DEVICES=$deviceId python alexnet_cifar10.py --batch_size=$batch_siz
 end=`date +%s.%N`
 runtime=$( echo "$end - $start" | bc -l )
 echo "finished with execute time: ${runtime}" 
-python cifar10_eval.py 
-rm trained_models/*
-rm train_eval/* 
+#python cifar10_eval.py 
+rm -rf trained_models
+rm -rf train_eval

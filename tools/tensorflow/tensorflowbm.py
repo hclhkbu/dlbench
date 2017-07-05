@@ -27,6 +27,9 @@ args = parser.parse_args()
 os.environ['OMP_NUM_THREADS'] = args.cpuCount 
 os.environ['OPENBLAS_NUM_THREADS'] = args.cpuCount 
 os.environ['MKL_NUM_THREADS'] = args.cpuCount 
+if os.path.exists('%s/tf12/bin' % os.environ['HOME']):
+    os.system('source %s/tf12/bin/activate' % os.environ['HOME'])
+
 # Build cmd for benchmark
 root_path = os.path.dirname(os.path.abspath(__file__))
 tool_path = root_path + "/" + args.netType
@@ -58,6 +61,6 @@ print(subprocess.check_output("python ../common/extract_info.py -f " + log_path 
 with open(log_path, "a") as logFile:
     logFile.write("Total time: " + str(t) + "\n")
     logFile.write("cmd: " + cmd + "\n")
-os.system("mv " + log_path + " ../../logs")
+os.system("mv " + log_path + " ../../logs/")
 
 
