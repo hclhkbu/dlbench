@@ -6,12 +6,6 @@ import time
 import requests
 import json
 
-from pymongo import MongoClient
-
-mongo_client = MongoClient("mongodb://%s:%s/" % (settings.MONGO_HOST, settings.MONGO_PORT))
-db = mongo_client[settings.MONGO_DBNAME]
-if settings.MONGO_AUTH_USER_NAME:
-    auth = db.authenticate(settings.MONGO_AUTH_USER_NAME, settings.MONGO_AUTH_PASSWORD)
 
 def post_record(**args):
     """
@@ -26,7 +20,6 @@ def post_record(**args):
     data = json.dumps(args) 
     ret = requests.post(settings.RESOURCE_URI, {'data': data})
     print ret
-    #db['record'].insert(args)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Post experiments record tool')

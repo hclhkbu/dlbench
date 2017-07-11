@@ -32,48 +32,41 @@ def print_arguments(info):
 
 def extract_info_caffe(filename):
     """
-    Use for caffe-rc5
+    Use for caffe1.0.0
     """
     f = open(filename)
     content = f.readlines()
     useful_lines = []
     accuracies = []
-    is_fist = True
     is_cpu = False
-    interval = 0
     average_times = [] 
+    loss_indexes = []
+    all_losses = []
     for index, line in enumerate(content):
         if line.find('Use CPU') > 0:
             is_cpu = True
-        if line.find('solver.cpp:219') > 0:
-            #interval += 1
-            #if interval == 3 or is_fist:
+        if line.find('solver.cpp:218') > 0:
             useful_lines.append(line)
-            #interval = 0
-            #is_fist = False
-        if (line.find('solver.cpp:398]     Test net output #1:') > 0 and len(useful_lines) > 0)or (is_cpu and line.find('Snapshotting to binary proto file ') > 0):
-            if (not is_fist) or is_cpu:
-                if not is_cpu:
-                    iteration = content[index-5].split()[5].strip(',') 
-                else:
-                    iteration = content[index-7].split()[5].strip(',') 
-                accuracy = content[index-1].split()[-1]
-                #loss = content[index].split()[10]
-                #loss = content[index-6].split()[-1]
-                if content[index+1].find("Optimization Done") > 0: # last iter
-                    loss = content[index-4].split()[-1]
-                else:
-                    loss = content[index+1].split()[-1]
-                # Append (iteration, accuracy)
-                #print '-----append useful: ', useful_lines 
-                if len(useful_lines) > 1:
-                    average_time, loss = _calculate_average_caffe(useful_lines)
-                    average_times.append(average_time)
-                accuracies.append((iteration, accuracy, loss))
-                useful_lines = []
-            elif not is_cpu:
-                is_fist = False
-            #interval = 0
+            items = line.split(' ')
+            iteration_idx = items.index('Iteration') + 1
+            iteration = items[iteration_idx]
+            average_time = float(items[iteration_idx+3].split('s/')[0])
+            average_times.append(average_time)
+            loss = float(items[-1].split('\n')[0])
+            all_losses.append(loss)
+            #accuracies.append((iteration, '-', loss))
+        if line.find('Testing net ') > 0:
+            items = line.split(' ')
+            iteration_idx = items.index('Iteration') + 1
+            loss_indexes.append(int(items[iteration_idx].split(',')[0]))
+    start_index = loss_indexes[0]
+    for i in loss_indexes[1:]:
+        end_index = i
+        iteration = i
+        loss = np.mean(all_losses[start_index:end_index])
+        accuracies.append((iteration, '-', loss))
+        start_index = end_index
+
     #print average_times
     average_time = np.average(average_times)
     try:
