@@ -7,11 +7,11 @@ layer {
   include {
     phase: TRAIN
   }
-  #transform_param {
-  #  mirror: true
-  #  crop_size: 224
-  #  mean_file: "/home/dataset/caffe/imagenet_mean.binaryproto"
-  #}
+  transform_param {
+    mirror: true
+    crop_size: 224
+    mean_file: "/home/dataset/caffe/imagenet_mean.binaryproto"
+  }
 # mean pixel / channel-wise mean instead of mean image
   transform_param {
     crop_size: 224
@@ -34,11 +34,11 @@ layer {
   include {
     phase: TEST
   }
-  #transform_param {
-  #  mirror: false
-  #  crop_size: 224
-  #  mean_file: "data/ilsvrc12/imagenet_mean.binaryproto"
-  #}
+  transform_param {
+    mirror: false
+    crop_size: 224
+    mean_file: "data/ilsvrc12/imagenet_mean.binaryproto"
+  }
 # mean pixel / channel-wise mean instead of mean image
   transform_param {
     crop_size: 224

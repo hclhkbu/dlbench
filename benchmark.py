@@ -1,6 +1,8 @@
 import argparse
 import sys,os,time
 import subprocess
+import collect_gpu_power as cgp
+from threading import Thread
 
 
 # Parse arguments
@@ -62,7 +64,7 @@ else:
 	print("Please add -config <path to your config file>")
 	sys.exit(0)
 
-post_flags = " -f " + flag + " -P " + cpu_name + " -A unknown" + " -r " + cuda_driver + " -C " + cuda + " -D " + cudnn
+post_flags = " -f " + flag + " -P " + cpu_name + " -r " + cuda_driver + " -C " + cuda + " -D " + cudnn
 
 if args.debug:
 	print "[DEBUG] Defalut post flags:" + str(post_flags)
@@ -98,6 +100,7 @@ for tool in tools:
 		print "\n-------Benchmarking " + tool + " " + exp_args[1] + "-------"
 		log_file += time.ctime()+ "-" + host_name + ".log"
 		log_file = log_file.replace(" ","_")
+		power_log_file = '%s/logs/power_%s' % (root_path, log_file)
 		bm_script = "python " + tool + "bm.py" 
 		bm_script += " -netType " + exp_args[0] + " -log "+log_file+" -batchSize "+exp_args[4]+" -network "+exp_args[1]+" -lr "+exp_args[7]
 		if "-1" in exp_args[2]:
@@ -110,11 +113,15 @@ for tool in tools:
 			bm_script += " -hostFile " + host_file
 		print bm_script
 		try:
+			thread = Thread(target = cgp.start_collecting_gpu_power, args = (bm_script, power_log_file))
+			thread.start()
 			result_args = subprocess.check_output(bm_script, shell=True).strip().split('\n')[0]
 		except Exception as e:
 			print "Benchmark failed with " + bm_script 
 			os.system("cat " + root_path + "/logs/" + log_file)
 			continue
+        
+		power, mem = cgp.get_average_gpu_power_and_mem(gpu_name, power_log_file)
 		post_flags += " " +  result_args + " -b " + exp_args[4] + " -g " + exp_args[3] + " -e " + exp_args[6] + " -E " + exp_args[5] 
 		post_flags += " -l " + log_file + " -T " + tool + " -n " + exp_args[1] 
 		os.chdir(root_path)
@@ -122,7 +129,7 @@ for tool in tools:
 			post_script = "python post_record.py " + post_flags
 			print post_script
 			print(subprocess.check_output(post_script, shell=True).strip().split('\n')[0])
-			post_flags = " -f " + flag + " -d " + device_name + " -P " + cpu_name + " -A unknown" + " -r " + cuda_driver + " -C " + cuda + " -D " + cudnn
+			post_flags = " -f " + flag + " -d " + device_name + " -P " + cpu_name + " -A " + str(mem) + " -r " + cuda_driver + " -C " + cuda + " -D " + cudnn + " -p " + str(power)
 			post_script = ''
 		else:
 			print "Result:"
