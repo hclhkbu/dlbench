@@ -28,3 +28,6 @@ multigpu-trained
 *-b*.prototxt
 *tmp*
 *Models*
+*.caffemodel
+*.solverstate
+

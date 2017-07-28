@@ -49,10 +49,11 @@ layer {
   }
   data_param {
     source: "/home/datasets/imagenet/caffe/ilsvrc12_val_lmdb"
-    batch_size: 200
+    batch_size: 50
     backend: LMDB
   }
 }
+
 layer {
   name: "conv1"
   type: "Convolution"
@@ -218,14 +219,14 @@ layer {
     num_output: 384
     pad: 1
     kernel_size: 3
-    #group: 2
+    group: 2
     weight_filler {
       type: "gaussian"
       std: 0.01
     }
     bias_filler {
       type: "constant"
-      value: 1
+      value: 0.1
     }
   }
 }
@@ -259,7 +260,7 @@ layer {
     }
     bias_filler {
       type: "constant"
-      value: 0
+      value: 0.1
     }
   }
 }
@@ -301,16 +302,16 @@ layer {
     }
     bias_filler {
       type: "constant"
-      value: 1
+      value: 0.1
     }
   }
 }
-#layer {
-#  name: "relu6"
-#  type: "ReLU"
-#  bottom: "fc6"
-#  top: "fc6"
-#}
+layer {
+  name: "relu6"
+  type: "ReLU"
+  bottom: "fc6"
+  top: "fc6"
+}
 layer {
   name: "drop6"
   type: "Dropout"
@@ -341,16 +342,16 @@ layer {
     }
     bias_filler {
       type: "constant"
-      value: 1
+      value: 0.1
     }
   }
 }
-#layer {
-#  name: "relu7"
-#  type: "ReLU"
-#  bottom: "fc7"
-#  top: "fc7"
-#}
+layer {
+  name: "relu7"
+  type: "ReLU"
+  bottom: "fc7"
+  top: "fc7"
+}
 layer {
   name: "drop7"
   type: "Dropout"

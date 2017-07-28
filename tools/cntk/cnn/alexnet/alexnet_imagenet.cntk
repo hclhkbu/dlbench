@@ -107,9 +107,9 @@ Train = {
         ParallelTrain = {
             parallelizationMethod = "DataParallelSGD"
             distributedMBReading = "true"
-            parallelizationStartEpoch = 3
+            parallelizationStartEpoch = 1
             DataParallelSGD = {
-                gradientBits = 4
+                gradientBits = 1
             }
         }
         
