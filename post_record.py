@@ -41,12 +41,13 @@ if __name__ == '__main__':
     parser.add_argument('-C', '--cuda', help='The version of CUDA', default='8.0')
     parser.add_argument('-D', '--cudnn', help='The version of cuDNN', default='5.1')
     parser.add_argument('-r', '--cuda_driver', help='The version of cuda driver', default='367.48')
+    parser.add_argument('-p', '--gpu_power', help='gpu power', default='0')
     parser.add_argument('-v', '--experiment_version', help='The version of running', default='v8')
     p = parser.parse_args()
     object_id = post_record(flag=p.flag, network=p.network, batch_size=p.batch_size, device_name=p.device_name,
                 gpu_count=p.gpu_count, cpu_count=p.cpu_count, cpu_name=p.cpu_name, epoch_size=p.epoch_size, epoch=p.epoch,
                 total_time=p.total_time, average_time=p.average_time, tool_name=p.tool_name, avg_mem=p.average_mem, 
-                epoch_info=p.epoch_info, log_file=p.log_file, cuda=p.cuda, cudnn=p.cudnn, cuda_driver=p.cuda_driver, version=p.experiment_version)
+                epoch_info=p.epoch_info, log_file=p.log_file, cuda=p.cuda, cudnn=p.cudnn, cuda_driver=p.cuda_driver, gpu_power=p.gpu_power, version=p.experiment_version)
     #object_id = post_record(flag='test', network='network')
     print 'post finished, object_id: ', object_id
 

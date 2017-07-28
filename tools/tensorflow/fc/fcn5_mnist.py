@@ -58,6 +58,7 @@ def get_real_batch_data(batch_size, label_dim):
 
 def train(model='fcn5'):
     config = tf.ConfigProto(log_device_placement=FLAGS.log_device_placement)
+    #config.gpu_options.allow_growth=True
     device_id = FLAGS.device_id
     device_str = ''
     if int(device_id) >= 0:
