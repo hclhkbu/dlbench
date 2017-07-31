@@ -39,7 +39,7 @@ if ".log" not in log_file:
     log_file += ".log"
 log_path = os.getcwd() + "/" + log_file
 cmd =  ' deviceId=' + args.devId + ' minibatchSize=' + args.batchSize +' maxEpochs=' + args.numEpochs 
-if int(args.gpuCount) > 1:
+if int(args.devId) >= 0 and int(args.gpuCount) > 1:
     if int(args.gpuCount) > 4:
         cmd = cmd + ' gpu_count=' + args.gpuCount + ' ./tmm.sh '
     else:
