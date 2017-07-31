@@ -8,7 +8,7 @@ layer {
     phase: TRAIN
   }
   transform_param {
-    mirror: false
+    mirror: true
     crop_size: 224
     mean_file: "/home/datasets/imagenet/caffe/imagenet_mean.binaryproto"
   }
@@ -37,7 +37,6 @@ layer {
     backend: LMDB
   }
 }
-
 layer {
   name: "conv1"
   type: "Convolution"
@@ -93,7 +92,6 @@ layer {
     stride: 2
   }
 }
-
 layer {
   name: "conv2"
   type: "Convolution"
@@ -118,7 +116,7 @@ layer {
     }
     bias_filler {
       type: "constant"
-      value: 0
+      value: 0.1
     }
   }
 }
@@ -128,7 +126,6 @@ layer {
   bottom: "conv2"
   top: "conv2"
 }
-
 layer {
   name: "norm2"
   type: "LRN"
@@ -140,7 +137,6 @@ layer {
     beta: 0.75
   }
 }
-
 layer {
   name: "pool2"
   type: "Pooling"
@@ -152,7 +148,6 @@ layer {
     stride: 2
   }
 }
-
 layer {
   name: "conv3"
   type: "Convolution"
