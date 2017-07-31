@@ -41,7 +41,7 @@ if ".log" not in log_file:
 	log_file += ".log"
 log_path = os.getcwd() + "/" + log_file
 cmd =  'CUDA_VISIBLE_DEVICE=' + args.devId +' deviceId=' + args.devId + ' batch_size=' + args.batchSize +' epochs=' + args.numEpochs 
-if int(args.gpuCount) > 1:
+if int(args.devId) >= 0 and int(args.gpuCount) > 1:
 	cmd += ' gpu_count=' + args.gpuCount + ' ./tm.sh '
 else:
 	cmd += ' ./t.sh '
