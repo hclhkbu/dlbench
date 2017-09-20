@@ -60,7 +60,7 @@ def add_fit_args(parser):
                        help='max num of epochs')
     train.add_argument('--lr', type=float, default=0.1,
                        help='initial learning rate')
-    train.add_argument('--lr-factor', type=float, default=0.1,
+    train.add_argument('--lr-factor', type=float, default=None,
                        help='the ratio to reduce lr on each step')
     train.add_argument('--lr-step-epochs', type=str,
                        help='the epochs to reduce the lr, e.g. 30,60')
